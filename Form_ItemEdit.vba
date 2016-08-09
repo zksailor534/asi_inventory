@@ -334,25 +334,25 @@ Private Sub SaveItem()
         !Product = Product
         !Style = Style
 
-        If (ItemLength = "") Then
+        If IsNull(ItemLength) Or Not (IsNumeric(ItemLength)) Then
             !ItemLength = Null
         Else
             !ItemLength = CLng(ItemLength)
         End If
 
-        If (ItemWidth = "") Then
+        If IsNull(ItemWidth) Or Not (IsNumeric(ItemWidth)) Then
             !ItemWidth = Null
         Else
             !ItemWidth = CLng(ItemWidth)
         End If
 
-        If (ItemHeight = "") Then
+        If IsNull(ItemHeight) Or Not (IsNumeric(ItemHeight)) Then
             !ItemHeight = Null
         Else
             !ItemHeight = CLng(ItemHeight)
         End If
 
-        If (ItemDepth = "") Then
+        If IsNull(ItemDepth) Or Not (IsNumeric(ItemDepth)) Then
             !ItemDepth = Null
         Else
             !ItemDepth = CLng(ItemDepth)
@@ -365,7 +365,7 @@ Private Sub SaveItem()
         !Description = Description
         !Vendor = Vendor
 
-        If (SuggSellingPrice = "") Then
+        If IsNull(SuggSellingPrice) Or Not (IsNumeric(SuggSellingPrice)) Then
             !SuggSellingPrice = Null
         Else
             !SuggSellingPrice = CCur(SuggSellingPrice)

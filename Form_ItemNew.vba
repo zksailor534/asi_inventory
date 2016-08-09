@@ -297,82 +297,6 @@ End Function
 ' SaveItem
 '
 '------------------------------------------------------------
-'Private Sub SaveItem()
-    ' Save Item Record
-    With rstItem
-        .MoveFirst
-        .Edit
-        !Category = Category
-        !RecordID = RecordID
-        !Manufacturer = Manufacturer
-        !Product = Product
-        !Style = Style
-
-        If (ItemLength = "") Then
-            !ItemLength = Null
-        Else
-            !ItemLength = CLng(ItemLength)
-        End If
-
-        If (ItemWidth = "") Then
-            !ItemWidth = Null
-        Else
-            !ItemWidth = CLng(ItemWidth)
-        End If
-
-        If (ItemHeight = "") Then
-            !ItemHeight = Null
-        Else
-            !ItemHeight = CLng(ItemHeight)
-        End If
-
-        If (ItemDepth = "") Then
-            !ItemDepth = Null
-        Else
-            !ItemDepth = CLng(ItemDepth)
-        End If
-
-        !RollerCenter = RollerCenter
-        !Column = Column
-        !Color = Color
-        !Condition = Condition
-        !Description = Description
-        !Vendor = Vendor
-
-        If (SuggSellingPrice = "") Then
-            !SuggSellingPrice = Null
-        Else
-            !SuggSellingPrice = CCur(SuggSellingPrice)
-        End If
-
-        !Capacity = Capacity
-        !BoltPattern = BoltPattern
-        !HolePattern = HolePattern
-        !Diameter = Diameter
-        !Degree = Degree
-        !DriveType = DriveType
-        !Gauge = Gauge
-        !NumStruts = NumStruts
-        !NumSteps = NumSteps
-        !Volts = Volts
-        !Phase = Phase
-        !AmpHR = AmpHR
-        !Serial = Serial
-        !QtyDoors = QtyDoors
-        !TopLiftHeight = TopLiftHeight
-        !LowerLiftHeight = LowerLiftHeight
-        !TopStepHeight = TopStepHeight
-        !LastChangeDate = Now()
-        !LastChangeOper = EmployeeLogin
-        .Update
-    End With
-End Sub
-
-
-'------------------------------------------------------------
-' SaveItem
-'
-'------------------------------------------------------------
 Private Sub SaveItem()
     ' Save Item Record
     With rstNewItem
@@ -383,25 +307,25 @@ Private Sub SaveItem()
         !Product = Product
         !Style = Style
 
-        If (ItemLength = "") Then
+        If IsNull(ItemLength) Or Not (IsNumeric(ItemLength)) Then
             !ItemLength = Null
         Else
             !ItemLength = CLng(ItemLength)
         End If
 
-        If (ItemWidth = "") Then
+        If IsNull(ItemWidth) Or Not (IsNumeric(ItemWidth)) Then
             !ItemWidth = Null
         Else
             !ItemWidth = CLng(ItemWidth)
         End If
 
-        If (ItemHeight = "") Then
+        If IsNull(ItemHeight) Or Not (IsNumeric(ItemHeight)) Then
             !ItemHeight = Null
         Else
             !ItemHeight = CLng(ItemHeight)
         End If
 
-        If (ItemDepth = "") Then
+        If IsNull(ItemDepth) Or Not (IsNumeric(ItemDepth)) Then
             !ItemDepth = Null
         Else
             !ItemDepth = CLng(ItemDepth)
@@ -414,7 +338,7 @@ Private Sub SaveItem()
         !Description = Description
         !Vendor = Vendor
 
-        If (SuggSellingPrice = "") Then
+        If IsNull(SuggSellingPrice) Or Not (IsNumeric(SuggSellingPrice)) Then
             !SuggSellingPrice = Null
         Else
             !SuggSellingPrice = CCur(SuggSellingPrice)
