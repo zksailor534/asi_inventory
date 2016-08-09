@@ -3,23 +3,26 @@ Option Compare Database
 '------------------------------------------------------------
 ' American Surplus Inventory Database
 ' Author: Nathanael Greene
-' Current Revision: 2.0
-' Revision Date: 09/12/2015
+' Current Revision: 2.02
+' Revision Date: 09/22/2015
 '
 ' Revision History:
 '   2.0:    Initial Release replaces legacy database
 '           Complete GUI overhaul
 '           Introduction of product-based structure
+'           Add commit management for all users
 '           Add Generate Record ID tools
 '   2.01:   Bug fixes (ItemEdit, ItemNew, ItemInventoryManage,
 '               Main, CategoriesEdit)
+'   2.02:   Bug fixes (ItemEdit, ItemNew) - invalid null in
+'               numeric inputs
 '------------------------------------------------------------
 
 '------------------------------------------------------------
 ' Global constants
 '
 '------------------------------------------------------------
-Public Const ReleaseVersion As String = "2.01"
+Public Const ReleaseVersion As String = "2.02"
 ''' User Roles
 Public Const DevelLevel As String = "Devel"
 Public Const AdminLevel As String = "Admin"
