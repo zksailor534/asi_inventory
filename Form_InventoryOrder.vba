@@ -108,7 +108,6 @@ Private Sub ManageCommitButton_Click()
 
     If IsNull(CurrentCommitID) Or (CurrentCommitID = 0) Then
         MsgBox "No commitment selected:" & vbCrLf & "Please select commitment to edit", , "Invalid Commit"
-        Debug.Print "CurrentCommitID", CurrentCommitID
         Exit Sub
     Else
         If (EmployeeRole = SalesLevel) And EmployeeLogin <> SalesOrderUser(CurrentSalesOrder) Then

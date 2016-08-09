@@ -118,7 +118,6 @@ On Error GoTo cmdSave_Click_Err
     End If
 
     ' Adjust quantity if called for
-    Debug.Print (QtyAdjustCheck.Value = True)
     If (QtyAdjustCheck.Value = True) Then
         If (CLng(NewQuantity) >= (Committed - rstCommit!QtyCommitted + QtyCommitted)) Then
             Utilities.OperationEntry rstCommit!ID, "Inventory", _

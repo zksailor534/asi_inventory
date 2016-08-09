@@ -1,34 +1,47 @@
 Option Compare Database
 
+
 '------------------------------------------------------------
 ' American Surplus Inventory Database
 ' Author: Nathanael Greene
-' Current Revision: 2.04
-' Revision Date: 09/25/2015
+' Current Revision: 2.1.0
+' Revision Date: 10/06/2015
 '
 ' Revision History:
-'   2.0:    Initial Release replaces legacy database
+'   2.0.0:  Initial Release replaces legacy database
 '           Complete GUI overhaul
 '           Introduction of product-based structure
 '           Add commit management for all users
 '           Add Generate Record ID tools
-'   2.01:   Bug fixes (ItemEdit, ItemNew, ItemInventoryManage,
+'   2.0.1:  Bug fixes (ItemEdit, ItemNew, ItemInventoryManage,
 '               Main, CategoriesEdit)
-'   2.02:   Bug fixes (ItemEdit, ItemNew) - invalid null in
+'   2.0.2:  Bug fixes (ItemEdit, ItemNew) - invalid null in
 '               numeric inputs
-'   2.03:   Bug fixes (Commit_Cancel, ItemNew) - cancel had
+'   2.0.3:  Bug fixes (Commit_Cancel, ItemNew) - cancel had
 '               wrong sign (committing more)
 '               Added Record ID search to Inventory Manage
 '               Added scroll bar to ItemNew
-'   2.04:   Bug fix (Utilities) - Commit_Cancel & Commit_Complete
+'   2.0.4:  Bug fix (Utilities) - Commit_Cancel & Commit_Complete
 '               missing recordset reference
+'   2.1.0:  Bug fix (ItemInventoryManage) - Operations changes
+'               overwrite; save L,W,H,D as Single
+'           Bug fix (Utilities) - Commit_complete allowed <0
+'               values after complete, added check
+'           Bug fix (qryItemWarehouse) - Did not display OnOrder
+'               items
+'           Bug fix (ItemEdit) - Did not allow some current RecordIDs
+'           Added RecalculateOriginalQuantities, ReclaimRecordIDs
+'           Upgraded NewRecordID calculation
+'           Added Record ID reservation system
+'           Add Inbound item toggle to InventoryManage (replace Print)
 '------------------------------------------------------------
+
 
 '------------------------------------------------------------
 ' Global constants
 '
 '------------------------------------------------------------
-Public Const ReleaseVersion As String = "2.04"
+Public Const ReleaseVersion As String = "2.1.0"
 ''' User Roles
 Public Const DevelLevel As String = "Devel"
 Public Const AdminLevel As String = "Admin"
@@ -47,6 +60,7 @@ Public Const SettingsDB As String = "Settings"
 Public Const WarehouseQuery As String = "qryItemWarehouse"
 Public Const CategoryQuery As String = "qryCategoryList"
 Public Const CommitQuery As String = "qryItemCommit"
+Public Const ProductQuery As String = "qrySubProducts"
 ''' Form Names
 Public Const MainForm As String = "Main"
 Public Const LoginForm As String = "Login"
@@ -61,6 +75,7 @@ Public Const PrintRangeForm As String = "PrintRange"
 Public Const CategoriesEditForm As String = "CategoriesEdit"
 Public Const GenerateRecordIDForm As String = "GenerateRecordID"
 Public Const OrderCommitManageForm As String = "OrderCommitManage"
+
 
 '------------------------------------------------------------
 ' Application properties
@@ -194,92 +209,6 @@ End Function
 
 
 '------------------------------------------------------------
-' SelectFirstCategory
-'
-'------------------------------------------------------------
-Public Function SelectFirstCategory() As String
-    Dim rst As DAO.Recordset
-
-    open_db
-    Set rst = db.OpenRecordset("SELECT CategoryName FROM " & CategoryQuery)
-
-    If rst.RecordCount > 0 Then
-        ' Return first category
-        rst.MoveFirst
-        SelectFirstCategory = rst!CategoryName
-    Else
-        ' Return asterisk
-        SelectFirstCategory = "*"
-    End If
-
-    rst.Close
-    Set rst = Nothing
-End Function
-
-
-'------------------------------------------------------------
-' CategoryFieldOrder
-'
-'------------------------------------------------------------
-Public Function CategoryFieldOrder(CategoryName As String, fieldName As String) As Long
-    Dim rst As DAO.Recordset
-
-    CategoryFieldOrder = -1
-    open_db
-    Set rst = db.OpenRecordset("SELECT [Field1],[Field2],[Field3],[Field4],[Field5],[Field6]," & _
-        "[Field7],[Field8],[Field9],[Field10],[Field11],[Field12] FROM " & CategoryDB & " WHERE [CategoryName]='" & _
-        CategoryName & "' AND [User]=" & EmployeeID)
-
-    If rst.RecordCount <> 1 Then
-        ' Fall back to default
-        Set rst = db.OpenRecordset("SELECT TOP 1 [Field1],[Field2],[Field3],[Field4],[Field5],[Field6],[Field7]," & _
-            "[Field8],[Field9],[Field10],[Field11],[Field12] FROM " & CategoryDB & " WHERE [CategoryName]='" & _
-            CategoryName & "' AND [User] IS NULL")
-    End If
-
-    If rst.RecordCount = 1 Then
-        rst.MoveFirst
-        For ii = 0 To rst.Fields.count - 1
-            If (rst.Fields(ii) <> "") Then
-                If (rst.Fields(ii) = fieldName) Then
-                    CategoryFieldOrder = ii
-                    GoTo ExitNow
-                End If
-            End If
-        Next ii
-    Else
-        MsgBox "Unable to determine Category Field Order", , "Invalid Category Field Order"
-    End If
-
-ExitNow:
-    rst.Close
-    Set rst = Nothing
-End Function
-
-
-'------------------------------------------------------------
-' FieldExists
-'
-'------------------------------------------------------------
-Public Function FieldExists(ByVal tableName As String, ByVal fieldName As String) As Boolean
-    Dim nLen As Long
-
-    On Error GoTo Failed
-    With DBEngine(0)(0).TableDefs(tableName)
-        .Fields.Refresh
-        nLen = Len(.Fields(fieldName).Name)
-
-        If nLen > 0 Then FieldExists = True
-
-    End With
-    Exit Function
-Failed:
-    If Err.Number = 3265 Then Err.Clear ' Error 3265 : Item not found in this collection.
-    FieldExists = False
-End Function
-
-
-'------------------------------------------------------------
 ' GetEmployeeID
 '
 '------------------------------------------------------------
@@ -345,6 +274,145 @@ End Function
 
 
 '------------------------------------------------------------
+' SelectFirstCategory
+'
+'------------------------------------------------------------
+Public Function SelectFirstCategory() As String
+    Dim rst As DAO.Recordset
+
+    open_db
+    Set rst = db.OpenRecordset("SELECT CategoryName FROM " & CategoryQuery)
+
+    If rst.RecordCount > 0 Then
+        ' Return first category
+        rst.MoveFirst
+        SelectFirstCategory = rst!CategoryName
+    Else
+        ' Return asterisk
+        SelectFirstCategory = "*"
+    End If
+
+    rst.Close
+    Set rst = Nothing
+End Function
+
+
+'------------------------------------------------------------
+' CategoryFieldOrder
+'
+'------------------------------------------------------------
+Public Function CategoryFieldOrder(CategoryName As String, fieldName As String) As Long
+    Dim rst As DAO.Recordset
+
+    CategoryFieldOrder = -1
+    open_db
+    Set rst = db.OpenRecordset("SELECT [Field1],[Field2],[Field3],[Field4],[Field5],[Field6]," & _
+        "[Field7],[Field8],[Field9],[Field10],[Field11],[Field12] FROM " & CategoryDB & " WHERE [CategoryName]='" & _
+        CategoryName & "' AND [User]=" & EmployeeID)
+
+    If rst.RecordCount <> 1 Then
+        ' Fall back to default
+        Set rst = db.OpenRecordset("SELECT TOP 1 [Field1],[Field2],[Field3],[Field4],[Field5],[Field6],[Field7]," & _
+            "[Field8],[Field9],[Field10],[Field11],[Field12] FROM " & CategoryDB & " WHERE [CategoryName]='" & _
+            CategoryName & "' AND [User] IS NULL")
+    End If
+
+    If rst.RecordCount = 1 Then
+        rst.MoveFirst
+        For ii = 0 To rst.Fields.count - 1
+            If (rst.Fields(ii) <> "") Then
+                If (rst.Fields(ii) = fieldName) Then
+                    CategoryFieldOrder = ii
+                    GoTo ExitNow
+                End If
+            End If
+        Next ii
+    Else
+        MsgBox "Unable to determine Category Field Order", , "Invalid Category Field Order"
+    End If
+
+ExitNow:
+    rst.Close
+    Set rst = Nothing
+End Function
+
+
+'------------------------------------------------------------
+' NewRecordID
+'
+'------------------------------------------------------------
+Public Function NewRecordID(strRecordPrefix As String, lowBound As Long) As String
+
+    Dim rst As DAO.Recordset
+    Dim strSql As String
+    Dim arrayDim As Boolean
+    Dim ind As Integer
+    Dim recordNumber As Long
+    Dim recordArray() As Long
+    Dim sortedArray() As Long
+
+    strSql = "SELECT DISTINCT [RecordID]" & " FROM " & ItemDB & _
+        " WHERE [RecordID]" & " LIKE '" & strRecordPrefix & "-*'" & _
+        " ORDER BY [RecordID];"
+
+    open_db
+    Set rst = db.OpenRecordset(strSql)
+
+    If rst.RecordCount > 1 Then
+        With rst
+            rst.MoveFirst
+            Do While Not .EOF
+                recordNumber = StripRecordID(strRecordPrefix, !RecordID)
+                If (lowBound > recordNumber) Then
+                    ' Skip numbers below low bound
+                    rst.MoveNext
+                ElseIf (lowBound = recordNumber) Then
+                    ' When low bound record is found, move to next
+                    lowBound = lowBound + 1
+                    rst.MoveNext
+                Else
+                    ' No record matches low bound, use it
+                    NewRecordID = strRecordPrefix & "-" & Format(lowBound, "0000")
+                    GoTo CleanUp
+                End If
+            Loop
+        End With
+    Else
+        ' No records found, use low bound
+        NewRecordID = strRecordPrefix & "-" & Format(lowBound, "0000")
+    End If
+
+CleanUp:
+    rst.Close
+    Set rst = Nothing
+    Set db = Nothing
+
+End Function
+
+
+'------------------------------------------------------------
+' FieldExists
+'
+'------------------------------------------------------------
+Public Function FieldExists(ByVal tableName As String, ByVal fieldName As String) As Boolean
+    Dim nLen As Long
+
+    On Error GoTo Failed
+    With DBEngine(0)(0).TableDefs(tableName)
+        .Fields.Refresh
+        nLen = Len(.Fields(fieldName).Name)
+
+        If nLen > 0 Then FieldExists = True
+
+    End With
+    Exit Function
+Failed:
+    If Err.Number = 3265 Then Err.Clear ' Error 3265 : Item not found in this collection.
+    FieldExists = False
+End Function
+
+
+'------------------------------------------------------------
 ' RecalculateCommit
 '
 '------------------------------------------------------------
@@ -360,18 +428,16 @@ Public Sub RecalculateCommit()
     ' Open recordsets
     Set rstInventory = db.OpenRecordset(InventoryDB)
 
-    ' Get total number of records
+    ' Initialize progress meter
     rstInventory.MoveLast
     count = rstInventory.RecordCount
-    rstInventory.MoveFirst
-
-    ' Initialize progress meter
     SysCmd acSysCmdInitMeter, "Recalculating commits...", count
 
     ' Loop over all items in inventory
-    Do While Not rstInventory.EOF
-        ' Update progress meter
-        SysCmd acSysCmdUpdateMeter, rstInventory.RecordCount
+    rstInventory.MoveFirst
+    For progress_amount = 1 To count
+        ' Update the progress meter
+         SysCmd acSysCmdUpdateMeter, progress_amount
 
         ' Open active commit table entries for given item
         sqlQuery = "SELECT QtyCommitted FROM " & CommitDB & _
@@ -396,7 +462,7 @@ Public Sub RecalculateCommit()
             End If
         End If
         rstInventory.MoveNext
-    Loop
+   Next progress_amount
 
    ' Remove the progress meter.
    SysCmd acSysCmdRemoveMeter
@@ -410,166 +476,149 @@ End Sub
 
 
 '------------------------------------------------------------
-' NewRecordID
+' RecalculateOriginalQuantity
 '
 '------------------------------------------------------------
-Public Function NewRecordID(strRecordPrefix As String, lowBound As Long) As String
+Public Sub RecalculateOriginalQuantity()
 
-    Dim rst As DAO.Recordset
-    Dim strSql As String
-    Dim arrayDim As Boolean
-    Dim ind As Integer
-    Dim recordArray() As Long
-    Dim sortedArray() As Long
+    Dim rstCommit, rstInventory As DAO.Recordset
+    Dim sqlQuery As String
+    Dim qty, count As Long
 
-    strSql = "SELECT [RecordID]" & _
-        " FROM " & ItemDB & _
-        " WHERE [RecordID]" & _
-        " LIKE '" & strRecordPrefix & "-*'" & _
-        " ORDER BY [RecordID]"
+    ' Open database
     open_db
-    Set rst = db.OpenRecordset(strSql, dbOpenSnapshot)
 
-    If rst.RecordCount > 1 Then
-        With rst
-            rst.MoveFirst
-            Do While Not .EOF
-                If arrayDim = True Then
-                    ReDim Preserve recordArray(1 To UBound(recordArray) + 1) As Long
-                Else
-                    ReDim recordArray(1 To 1) As Long
-                    arrayDim = True
-                End If
-                recordArray(UBound(recordArray)) = StripRecordID(strRecordPrefix, !RecordID)
-                rst.MoveNext
+    ' Open recordsets
+    Set rstInventory = db.OpenRecordset(InventoryDB)
+
+    ' Initialize progress meter
+    rstInventory.MoveLast
+    count = rstInventory.RecordCount
+    SysCmd acSysCmdInitMeter, "Recalculating original quantities...", count
+
+    ' Loop over all items in inventory
+    rstInventory.MoveFirst
+    For progress_amount = 1 To count
+        ' Update the progress meter
+         SysCmd acSysCmdUpdateMeter, progress_amount
+
+        ' Open active commit table entries for given item
+        sqlQuery = "SELECT QtyCommitted FROM " & CommitDB & _
+            " WHERE [Status] = 'C' AND [ItemID] = " & rstInventory!ItemId
+        Set rstCommit = db.OpenRecordset(sqlQuery)
+
+        If Not (rstCommit.EOF) Then
+            ' Get current quantity
+            qty = rstInventory!OnHand
+
+            ' Get sum of active commit entries
+            rstCommit.MoveFirst
+            Do While Not rstCommit.EOF
+                qty = qty + CInt(rstCommit!QtyCommitted)
+                rstCommit.MoveNext
             Loop
-        End With
-    ElseIf rst.RecordCount = 1 Then
-        If StripRecordID(strRecordPrefix, rst!RecordID) = lowBound Then
-            lowBound = lowBound + 1
-        End If
-        NewRecordID = strRecordPrefix & "-" & Format(lowBound, "0000")
-    ElseIf rst.RecordCount = 0 Then
-        NewRecordID = strRecordPrefix & "-" & Format(lowBound, "0000")
-    End If
 
-    If (IsInitialized(recordArray)) Then
-        sortedArray = RemoveDups(recordArray)
-        For ind = lowBound To UBound(sortedArray)
-            If (sortedArray(ind) >= lowBound) Then
-                If (lowBound <> sortedArray(ind)) Then
-                    NewRecordID = strRecordPrefix & "-" & Format(lowBound, "0000")
-                    Exit For
-                Else
-                    lowBound = lowBound + 1
-                End If
-            Else
-                Exit For
+            ' Compare calculated quantity with Inventory table
+            If IsNull(rstInventory!OrigQty) Then
+                rstInventory.Edit
+                rstInventory!OrigQty = qty
+                rstInventory.Update
+            ElseIf (CInt(rstInventory!OrigQty) <> qty) Then
+                rstInventory.Edit
+                rstInventory!OrigQty = qty
+                rstInventory.Update
             End If
-        Next ind
-    Else
-        NewRecordID = strRecordPrefix & "-" & Format(lowBound, "0000")
-    End If
-
-CleanUp:
-    rst.Close
-    Set rst = Nothing
-    Set db = Nothing
-
-End Function
-
-
-'------------------------------------------------------------
-' BubbleSrt
-' Sort array
-'------------------------------------------------------------
-Private Function BubbleSrt(ArrayIn() As Long, Ascending As Boolean) As Long()
-
-    Dim SrtTemp As Long
-    Dim i As Long
-    Dim j As Long
-
-
-    If Ascending = True Then
-        For i = LBound(ArrayIn) To UBound(ArrayIn)
-             For j = i + 1 To UBound(ArrayIn)
-                 If ArrayIn(i) > ArrayIn(j) Then
-                     SrtTemp = ArrayIn(j)
-                     ArrayIn(j) = ArrayIn(i)
-                     ArrayIn(i) = SrtTemp
-                 End If
-             Next j
-         Next i
-    Else
-        For i = LBound(ArrayIn) To UBound(ArrayIn)
-             For j = i + 1 To UBound(ArrayIn)
-                 If ArrayIn(i) < ArrayIn(j) Then
-                     SrtTemp = ArrayIn(j)
-                     ArrayIn(j) = ArrayIn(i)
-                     ArrayIn(i) = SrtTemp
-                 End If
-             Next j
-         Next i
-    End If
-
-    BubbleSrt = RemoveDups(ArrayIn)
-
-End Function
-
-
-'------------------------------------------------------------
-' RemoveDups
-' Remove duplicates from array
-'------------------------------------------------------------
-Private Function RemoveDups(intArray() As Long) As Long()
-
-    Dim old_i As Integer
-    Dim last_i As Integer
-    Dim low_i, high_i As Integer
-    Dim result() As Long
-
-    ' Get the lower and upper bounds
-    low_i = LBound(intArray)
-    high_i = UBound(intArray)
-
-    ' Make the result array.
-    ReDim result(low_i To high_i)
-
-    ' Copy the first item into the result array.
-    result(low_i) = intArray(low_i)
-
-    ' Copy the other items
-    last_i = low_i
-    For old_i = (low_i + 1) To high_i
-        If result(last_i) <> intArray(old_i) Then
-            ' No duplicate found
-            last_i = last_i + 1
-            result(last_i) = intArray(old_i)
+        ElseIf IsNull(rstInventory!OrigQty) Then
+            rstInventory.Edit
+            rstInventory!OrigQty = rstInventory!OnHand
+            rstInventory.Update
+        ElseIf (CInt(rstInventory!OnHand) <> CInt(rstInventory!OrigQty)) Then
+            rstInventory.Edit
+            rstInventory!OrigQty = rstInventory!OnHand
+            rstInventory.Update
         End If
-    Next old_i
+        rstInventory.MoveNext
+   Next progress_amount
 
-    ' Remove unused entries from the result array.
-    ReDim Preserve result(low_i To last_i)
+   ' Remove the progress meter.
+   SysCmd acSysCmdRemoveMeter
 
-    ' Return the result array.
-    RemoveDups = result
-End Function
+    ' Clean up
+    rstCommit.Close
+    rstInventory.Close
+    Set rstCommit = Nothing
+    Set rstInventory = Nothing
+End Sub
 
 
 '------------------------------------------------------------
-' IsInitialized
-' Check if array of Long integers is initialized
+' ReclaimRecordIDs
+'
 '------------------------------------------------------------
-Private Function IsInitialized(arr() As Long) As Boolean
-    On Error GoTo ErrHandler
-    Dim nUbound As Long
-    nUbound = UBound(arr)
-    IsInitialized = True
-    Exit Function
-ErrHandler:
-    IsInitialized = False
-    Exit Function
-End Function
+Public Sub ReclaimRecordIDs()
+
+    Dim rstCommit, rstInventory, rstItem As DAO.Recordset
+    Dim invQuery, comQuery As String
+    Dim count As Long
+    Dim pregress_amount As Integer
+
+    ' Open database
+    open_db
+
+    ' Open item recordset
+    Set rstItem = db.OpenRecordset("SELECT * FROM " & ItemDB & " ORDER BY ID;")
+
+    ' Initialize progress meter
+    rstItem.MoveLast
+    count = rstItem.RecordCount
+    SysCmd acSysCmdInitMeter, "Reclaiming unused Record IDs...", count
+
+    ' Loop over all items
+    rstItem.MoveFirst
+    For progress_amount = 1 To count
+        ' Update the progress meter
+         SysCmd acSysCmdUpdateMeter, progress_amount
+
+        ' Check if Record ID has already been reclaimed
+        If Not (rstItem!RecordID = "---") Then
+
+            ' Get commit record
+            comQuery = "SELECT TOP 1 * FROM " & CommitDB & " WHERE [ItemID] = " & rstItem!ID
+            Set rstCommit = db.OpenRecordset(comQuery)
+
+            If (rstCommit.RecordCount = 0) Then
+
+                ' Get inventory record
+                invQuery = "SELECT TOP 1 * FROM " & InventoryDB & " WHERE [ItemID] = " & rstItem!ID
+                Set rstInventory = db.OpenRecordset(invQuery)
+
+                If (rstInventory.RecordCount = 0) Then
+                    ' Remove record if no inventory or commit entry exists
+                    rstItem.Delete
+                ElseIf (rstInventory!OnHand = 0) Then
+                    ' Set RecordID to "---" if no quantity remains
+                    rstItem.Edit
+                    rstItem!RecordID = "---"
+                    rstItem.Update
+                End If
+            End If
+        End If
+
+        ' Go to the next record
+         rstItem.MoveNext
+   Next progress_amount
+
+   ' Remove the progress meter
+   SysCmd acSysCmdRemoveMeter
+
+    ' Clean up
+    rstItem.Close
+    rstCommit.Close
+    rstInventory.Close
+    Set rstCommit = Nothing
+    Set rstInventory = Nothing
+    Set rstItem = Nothing
+End Sub
 
 
 '------------------------------------------------------------
@@ -608,6 +657,24 @@ Public Function IsValidCategory(Category As String) As Boolean
     Exit Function
 ErrHandler:
     IsValidCategory = False
+    Exit Function
+End Function
+
+
+'------------------------------------------------------------
+' IsValidProduct
+' Check if given string is valid product
+'------------------------------------------------------------
+Public Function IsValidProduct(Product As String) As Boolean
+    On Error GoTo ErrHandler
+    If (Product = DLookup("ProductName", ProductDB, "[ProductName]='" & Product & "'")) Then
+        IsValidProduct = True
+    Else
+        IsValidProduct = False
+    End If
+    Exit Function
+ErrHandler:
+    IsValidProduct = False
     Exit Function
 End Function
 
@@ -799,6 +866,8 @@ Public Function Commit_Complete(ByRef rst As DAO.Recordset) As Boolean
                 GoTo Quantity_Err
             ElseIf (rst!Committed <= 0) Or (rst!QtyCommitted <= 0) Then
                 GoTo Quantity_Err
+            ElseIf ((!Committed - !QtyCommitted) < 0) Or ((!OnHand - !QtyCommitted) < 0) Then
+                GoTo Quantity_Err
             End If
 
             With rst
@@ -873,3 +942,46 @@ OperationEntry_Err:
     MsgBox "Error: (" & Err.Number & ") " & Err.Description, vbCritical
     Resume OperationEntry_Exit
 End Sub
+
+
+'------------------------------------------------------------
+' RecordIDReserve
+'
+'------------------------------------------------------------
+Public Function RecordIDReserve(ID As String, Category As String) As Boolean
+    On Error GoTo RecordIDReserve_Err
+
+    Dim rst As Recordset
+
+    open_db
+    Set rst = db.OpenRecordset(ItemDB)
+
+    ' Check to make sure that Record ID doesn't exist
+    If IsNull(DLookup("RecordID", ItemDB, "[RecordID]='" & ID & "'")) Then
+        ' Proceed to reserve Record ID
+        With rst
+            .AddNew
+            !RecordID = ID
+            !Category = Category
+            !Vendor = "RESERVED"
+            !CreateDate = Now()
+            !CreateOper = EmployeeLogin
+            .Update
+        End With
+        RecordIDReserve = True
+    Else
+        MsgBox "Error: " & vbCrLf & "Cannot Reserve Record ID " & vbCrLf & _
+            "Record ID already exists", , "Cannot Reserve"
+        RecordIDReserve = False
+        GoTo RecordIDReserve_Exit
+    End If
+
+RecordIDReserve_Exit:
+    rst.Close
+    Set rst = Nothing
+    Exit Function
+
+RecordIDReserve_Err:
+    MsgBox "Error: (" & Err.Number & ") " & Err.Description, vbCritical
+    Resume RecordIDReserve_Exit
+End Function

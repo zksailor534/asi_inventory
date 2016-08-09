@@ -33,6 +33,10 @@ Private Sub Form_Open(Cancel As Integer)
     subForm.Controls("LastOper").ColumnHidden = True
     subForm.Controls("LastDate").ColumnHidden = True
 
+    ' Default Inbound toggle to false
+    Me.InboundToggle.Value = False
+    subForm.Controls("OnOrder").ColumnHidden = True
+
     ' Engage filter from category selection
     subForm.Filter = "[Category] LIKE '" & CategorySelected & "'"
     subForm.FilterOn = True
@@ -40,7 +44,6 @@ Private Sub Form_Open(Cancel As Integer)
     ' Set column visibility
     SetColumnVisibility
 
-outNow:
     CategorySelected.SetFocus
 
 End Sub
@@ -61,7 +64,6 @@ Private Sub CategorySelected_AfterUpdate()
 
     SetColumnVisibility
 
-outNow:
     CategorySelected.SetFocus
 
 End Sub
@@ -73,16 +75,16 @@ End Sub
 '------------------------------------------------------------
 Private Sub RecordIDFilter_AfterUpdate()
     If Not (IsNull(RecordIDFilter)) Or (RecordIDFilter <> "") Then
-        OrderFilterButton_Click
+        IDFilterButton_Click
     End If
 End Sub
 
 
 '------------------------------------------------------------
-' OrderFilterButton_Click
+' IDFilterButton_Click
 '
 '------------------------------------------------------------
-Private Sub OrderFilterButton_Click()
+Private Sub IDFilterButton_Click()
     If IsNull(RecordIDFilter) Or (RecordIDFilter = "") Then
         RecordIDFilter.SetFocus
     Else
@@ -114,6 +116,26 @@ End Sub
 
 
 '------------------------------------------------------------
+' InboundToggle_Click
+'
+'------------------------------------------------------------
+Private Sub InboundToggle_Click()
+    If (InboundToggle.Value = True) Then
+        Me.sbfrmInvSearch.Form.Filter = "[OnOrder] > 0"
+        Me.sbfrmInvSearch.Form.FilterOn = True
+        Me.sbfrmInvSearch.Form.Controls("OnOrder").ColumnHidden = False
+        Me.sbfrmInvSearch.Form.Controls("OnOrder").ColumnOrder = 5
+        Me.sbfrmInvSearch.Form.Requery
+    Else
+        Me.sbfrmInvSearch.Form.Filter = "[Category]= '" & CategorySelected & "'"
+        Me.sbfrmInvSearch.Form.FilterOn = True
+        Me.sbfrmInvSearch.Form.Controls("OnOrder").ColumnHidden = True
+        Me.sbfrmInvSearch.Form.Requery
+    End If
+End Sub
+
+
+'------------------------------------------------------------
 ' EditItemButton_Click
 '
 '------------------------------------------------------------
@@ -123,7 +145,6 @@ Private Sub EditItemButton_Click()
         DoCmd.OpenForm ItemEditForm, acNormal, , , , acDialog
         Me.sbfrmInvSearch.Form.Requery
     Else
-        Debug.Print "CurrentItemID", CurrentItemID
         MsgBox "Please select record to edit"
         Exit Sub
     End If
@@ -144,63 +165,6 @@ Private Sub ManageInvButton_Click()
         MsgBox "Please select record to edit"
         Exit Sub
     End If
-
-End Sub
-
-
-'------------------------------------------------------------
-' PrintButton_Click
-'
-'------------------------------------------------------------
-Private Sub PrintButton_Click()
-
-    Dim subForm As Access.Form
-    Dim keyStr As String
-    Dim recSet As DAO.Recordset
-    Dim numRecs As Long
-    Dim idx As Long
-
-    Set subForm = sbfrmInvSearch.Form
-    PrintCategorySelected = CategorySelected
-
-    ' Capture records
-    numRecs = subForm.DSSelHeight
-    If numRecs < 1 Then
-        MsgBox "Please select a Range of records.", vbOKOnly, "Error,Error"
-        GoTo outNow
-    End If
-
-    Set recSet = subForm.RecordsetClone
-
-    ' Walk through each selected record to retrieve the primary key.
-    keyStr = ""
-    For idx = 1 To numRecs
-        keyStr = keyStr & "ID = " & subForm.ID.Value & " or "
-
-        recSet.Bookmark = subForm.Bookmark
-        recSet.MoveNext
-
-        If (Not (recSet.EOF)) Then
-            subForm.Bookmark = recSet.Bookmark
-        End If
-    Next idx
-
-    ' Remove the trailing or
-    keyStr = Left$(keyStr, Len(keyStr) - 3)
-
-    ' Open PrintRange form
-    DoCmd.OpenForm PrintRangeForm, acFormDS, , keyStr, , acWindowNormal
-
-CleanUp:
-    Set recSet = Nothing
-    Exit Sub
-
-ErrHandler:
-    MsgBox "Error in SelRecsBtn_Click( ) in" & vbCrLf & Me.Name & " form." & vbCrLf & vbCrLf & "Error #" & Err.Number & vbCrLf & vbCrLf & Err.Description
-    Err.Clear
-    GoTo CleanUp
-
-outNow:
 
 End Sub
 
