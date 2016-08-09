@@ -15,7 +15,7 @@ Private Sub Form_Open(Cancel As Integer)
 
     ' Set selected category
     If (EmployeeCategory = "") Then
-        CategorySelected = "Acc / Rack"
+        CategorySelected = Utilities.SelectFirstCategory
     Else
         CategorySelected = EmployeeCategory
     End If
@@ -34,7 +34,7 @@ Private Sub Form_Open(Cancel As Integer)
     subForm.Controls("LastDate").ColumnHidden = True
 
     ' Engage filter from category selection
-    subForm.Filter = "[Category]= '" & CategorySelected & "'"
+    subForm.Filter = "[Category] LIKE '" & CategorySelected & "'"
     subForm.FilterOn = True
 
     ' Set column visibility

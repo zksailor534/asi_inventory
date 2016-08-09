@@ -10,11 +10,6 @@ Private rstCategory As DAO.Recordset
 Private Sub Form_Load()
 On Error GoTo Form_Load_Err
 
-    Dim DefaultCategory As String
-
-    ' Set selected category
-    DefaultCategory = "Acc / Rack"
-
     SetScreenSize
 
     ' Open the recordset

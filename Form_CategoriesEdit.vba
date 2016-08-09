@@ -13,14 +13,14 @@ On Error GoTo Form_Load_Err
     Dim DefaultCategory As String
 
     ' Set selected category
-    DefaultCategory = "Acc / Rack"
+    DefaultCategory = Utilities.SelectFirstCategory
 
     SetScreenSize
 
     ' Open the recordset
     open_db
     Set rstCategory = db.OpenRecordset("SELECT * FROM " & CategoryDB & _
-        " WHERE [CategoryName] = '" & DefaultCategory & "' AND [User] IS NULL")
+        " WHERE [CategoryName] LIKE '" & DefaultCategory & "' AND [User] IS NULL")
 
     ' Hide User Column
     Me.sbfrmDS!User.ColumnHidden = True
@@ -94,6 +94,8 @@ Private Sub DeleteButton_Click()
     Dim delCategory As Integer
     delCategory = MsgBox("Do you want to delete this Category?", vbYesNo, "Delete Category")
     If delCategory = vbYes Then
+        Set rstCategory = db.OpenRecordset("SELECT * FROM " & CategoryDB & _
+            " WHERE [CategoryName] = '" & Category & "' AND [User] IS NULL")
         DeleteItem
     End If
 End Sub
@@ -182,6 +184,7 @@ Private Sub NewItem()
             !Field10 = Field10
             !Field11 = Field11
             !Field12 = Field12
+            !User = Null
             .Update
         End With
     Else

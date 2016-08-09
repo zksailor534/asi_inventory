@@ -179,6 +179,30 @@ End Function
 
 
 '------------------------------------------------------------
+' SelectFirstCategory
+'
+'------------------------------------------------------------
+Public Function SelectFirstCategory() As String
+    Dim rst As DAO.Recordset
+
+    open_db
+    Set rst = db.OpenRecordset("SELECT CategoryName FROM " & CategoryQuery)
+
+    If rst.RecordCount > 0 Then
+        ' Return first category
+        rst.MoveFirst
+        SelectFirstCategory = rst!CategoryName
+    Else
+        ' Return asterisk
+        SelectFirstCategory = "*"
+    End If
+
+    rst.Close
+    Set rst = Nothing
+End Function
+
+
+'------------------------------------------------------------
 ' CategoryFieldOrder
 '
 '------------------------------------------------------------
@@ -204,13 +228,17 @@ Public Function CategoryFieldOrder(CategoryName As String, fieldName As String) 
             If (rst.Fields(ii) <> "") Then
                 If (rst.Fields(ii) = fieldName) Then
                     CategoryFieldOrder = ii
-                    Exit Function
+                    GoTo ExitNow
                 End If
             End If
         Next ii
     Else
         MsgBox "Unable to determine Category Field Order", , "Invalid Category Field Order"
     End If
+
+ExitNow:
+    rst.Close
+    Set rst = Nothing
 End Function
 
 
