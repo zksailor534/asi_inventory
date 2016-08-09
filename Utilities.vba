@@ -1,34 +1,47 @@
 Option Compare Database
 
+
 '------------------------------------------------------------
 ' American Surplus Inventory Database
 ' Author: Nathanael Greene
-' Current Revision: 2.04
-' Revision Date: 09/25/2015
+' Current Revision: 2.1.0
+' Revision Date: 10/06/2015
 '
 ' Revision History:
-'   2.0:    Initial Release replaces legacy database
+'   2.0.0:  Initial Release replaces legacy database
 '           Complete GUI overhaul
 '           Introduction of product-based structure
 '           Add commit management for all users
 '           Add Generate Record ID tools
-'   2.01:   Bug fixes (ItemEdit, ItemNew, ItemInventoryManage,
+'   2.0.1:  Bug fixes (ItemEdit, ItemNew, ItemInventoryManage,
 '               Main, CategoriesEdit)
-'   2.02:   Bug fixes (ItemEdit, ItemNew) - invalid null in
+'   2.0.2:  Bug fixes (ItemEdit, ItemNew) - invalid null in
 '               numeric inputs
-'   2.03:   Bug fixes (Commit_Cancel, ItemNew) - cancel had
+'   2.0.3:  Bug fixes (Commit_Cancel, ItemNew) - cancel had
 '               wrong sign (committing more)
 '               Added Record ID search to Inventory Manage
 '               Added scroll bar to ItemNew
-'   2.04:   Bug fix (Utilities) - Commit_Cancel & Commit_Complete
+'   2.0.4:  Bug fix (Utilities) - Commit_Cancel & Commit_Complete
 '               missing recordset reference
+'   2.1.0:  Bug fix (ItemInventoryManage) - Operations changes
+'               overwrite; save L,W,H,D as Single
+'           Bug fix (Utilities) - Commit_complete allowed <0
+'               values after complete, added check
+'           Bug fix (qryItemWarehouse) - Did not display OnOrder
+'               items
+'           Bug fix (ItemEdit) - Did not allow some current RecordIDs
+'           Added RecalculateOriginalQuantities, ReclaimRecordIDs
+'           Upgraded NewRecordID calculation
+'           Added Record ID reservation system
+'           Add Inbound item toggle to InventoryManage (replace Print)
 '------------------------------------------------------------
+
 
 '------------------------------------------------------------
 ' Global constants
 '
 '------------------------------------------------------------
-Public Const ReleaseVersion As String = "2.04"
+Public Const ReleaseVersion As String = "2.1.0"
 ''' User Roles
 Public Const DevelLevel As String = "Devel"
 Public Const AdminLevel As String = "Admin"
