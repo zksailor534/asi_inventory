@@ -909,3 +909,46 @@ OperationEntry_Err:
     MsgBox "Error: (" & Err.Number & ") " & Err.Description, vbCritical
     Resume OperationEntry_Exit
 End Sub
+
+
+'------------------------------------------------------------
+' RecordIDReserve
+'
+'------------------------------------------------------------
+Public Function RecordIDReserve(ID As String, Category As String) As Boolean
+    On Error GoTo RecordIDReserve_Err
+
+    Dim rst As Recordset
+
+    open_db
+    Set rst = db.OpenRecordset(ItemDB)
+
+    ' Check to make sure that Record ID doesn't exist
+    If IsNull(DLookup("RecordID", ItemDB, "[RecordID]='" & ID & "'")) Then
+        ' Proceed to reserve Record ID
+        With rst
+            .AddNew
+            !RecordID = ID
+            !Category = Category
+            !Vendor = "RESERVED"
+            !CreateDate = Now()
+            !CreateOper = EmployeeLogin
+            .Update
+        End With
+        RecordIDReserve = True
+    Else
+        MsgBox "Error: " & vbCrLf & "Cannot Reserve Record ID " & vbCrLf & _
+            "Record ID already exists", , "Cannot Reserve"
+        RecordIDReserve = False
+        GoTo RecordIDReserve_Exit
+    End If
+
+RecordIDReserve_Exit:
+    rst.Close
+    Set rst = Nothing
+    Exit Function
+
+RecordIDReserve_Err:
+    MsgBox "Error: (" & Err.Number & ") " & Err.Description, vbCritical
+    Resume RecordIDReserve_Exit
+End Function
