@@ -415,18 +415,16 @@ Public Sub RecalculateCommit()
     ' Open recordsets
     Set rstInventory = db.OpenRecordset(InventoryDB)
 
-    ' Get total number of records
+    ' Initialize progress meter
     rstInventory.MoveLast
     count = rstInventory.RecordCount
-    rstInventory.MoveFirst
-
-    ' Initialize progress meter
     SysCmd acSysCmdInitMeter, "Recalculating commits...", count
 
     ' Loop over all items in inventory
-    Do While Not rstInventory.EOF
-        ' Update progress meter
-        SysCmd acSysCmdUpdateMeter, rstInventory.RecordCount
+    rstInventory.MoveFirst
+    For progress_amount = 1 To count
+        ' Update the progress meter
+         SysCmd acSysCmdUpdateMeter, progress_amount
 
         ' Open active commit table entries for given item
         sqlQuery = "SELECT QtyCommitted FROM " & CommitDB & _
@@ -451,7 +449,7 @@ Public Sub RecalculateCommit()
             End If
         End If
         rstInventory.MoveNext
-    Loop
+   Next progress_amount
 
    ' Remove the progress meter.
    SysCmd acSysCmdRemoveMeter
@@ -854,6 +852,8 @@ Public Function Commit_Complete(ByRef rst As DAO.Recordset) As Boolean
             If (rst!OnHand < 0) Or (rst!OnHand < rst!Committed) Then
                 GoTo Quantity_Err
             ElseIf (rst!Committed <= 0) Or (rst!QtyCommitted <= 0) Then
+                GoTo Quantity_Err
+            ElseIf ((!Committed - !QtyCommitted) < 0) Or ((!OnHand - !QtyCommitted) < 0) Then
                 GoTo Quantity_Err
             End If
 
