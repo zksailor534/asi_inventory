@@ -27,7 +27,7 @@ On Error GoTo Form_Load_Err
 
     ' Open the recordset
     open_db
-    Set rstItem = db.OpenRecordset("SELECT * FROM " & ItemDB & " WHERE [ID] = " & CurrentItemID)
+    Set rstItem = db.OpenRecordset("SELECT TOP 1 * FROM " & ItemDB & " WHERE [ID] = " & CurrentItemID)
 
     FillFields
 
@@ -135,7 +135,7 @@ Private Sub updateProductList()
 
     CategoryID = Utilities.GetCategoryID(Category)
     If (CategoryID <> 0) Then
-        sqlQuery = "SELECT ProductName FROM " & ProductDB & " WHERE Category.Value = " & CategoryID
+        sqlQuery = "SELECT ProductName FROM " & ProductQuery & " WHERE Category.Value = " & CategoryID
         Product.RowSource = sqlQuery
     End If
 End Sub
@@ -297,8 +297,8 @@ Private Function ValidateFields() As Boolean
         Utilities.FieldErrorClear Me.Controls("Category")
     End If
 
-    ' Check for valid Product (TBD: expand for Product List)
-    If (Product = "") Then
+    ' Check for valid Product
+    If Not (Utilities.IsValidProduct(Product)) Then
         Utilities.FieldErrorSet Me.Controls("Product")
         ValidateFields = False
     Else
@@ -339,25 +339,25 @@ Private Sub SaveItem()
         If IsNull(ItemLength) Or Not (IsNumeric(ItemLength)) Then
             !ItemLength = Null
         Else
-            !ItemLength = CLng(ItemLength)
+            !ItemLength = CSng(ItemLength)
         End If
 
         If IsNull(ItemWidth) Or Not (IsNumeric(ItemWidth)) Then
             !ItemWidth = Null
         Else
-            !ItemWidth = CLng(ItemWidth)
+            !ItemWidth = CSng(ItemWidth)
         End If
 
         If IsNull(ItemHeight) Or Not (IsNumeric(ItemHeight)) Then
             !ItemHeight = Null
         Else
-            !ItemHeight = CLng(ItemHeight)
+            !ItemHeight = CSng(ItemHeight)
         End If
 
         If IsNull(ItemDepth) Or Not (IsNumeric(ItemDepth)) Then
             !ItemDepth = Null
         Else
-            !ItemDepth = CLng(ItemDepth)
+            !ItemDepth = CSng(ItemDepth)
         End If
 
         !RollerCenter = RollerCenter

@@ -186,16 +186,18 @@ End Sub
 Private Sub SaveInventory()
     Dim change As String
 
+    change = ""
+
     If (rstInventory!Location <> Location) Then
-        change = "Changed Location from " & rstInventory!Location & " to " & Location & ";"
+        change = change & "Changed Location from " & rstInventory!Location & " to " & Location & ";"
     End If
 
     If (rstInventory!OnHand <> OnHand) Then
-        change = "Changed OnHand from " & rstInventory!OnHand & " to " & OnHand & ";"
+        change = change & "Changed OnHand from " & rstInventory!OnHand & " to " & OnHand & ";"
     End If
 
     If (rstInventory!OnOrder <> OnOrder) Then
-        change = "Changed OnOrder from " & rstInventory!OnOrder & " to " & OnOrder & ";"
+        change = change & "Changed OnOrder from " & rstInventory!OnOrder & " to " & OnOrder & ";"
     End If
 
     If (change <> "") Then
