@@ -130,12 +130,12 @@ End Sub
 ' Update Product Combo box with all products in category
 '------------------------------------------------------------
 Private Sub updateProductList()
-    Dim categoryID As Long
+    Dim CategoryID As Long
     Dim sqlQuery As String
 
-    categoryID = Utilities.GetCategoryID(Category)
-    If (categoryID <> 0) Then
-        sqlQuery = "SELECT ProductName FROM " & ProductDB & " WHERE Category.Value = " & categoryID
+    CategoryID = Utilities.GetCategoryID(Category)
+    If (CategoryID <> 0) Then
+        sqlQuery = "SELECT ProductName FROM " & ProductDB & " WHERE Category.Value = " & CategoryID
         Product.RowSource = sqlQuery
     End If
 End Sub
