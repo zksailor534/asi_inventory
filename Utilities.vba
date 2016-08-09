@@ -194,6 +194,71 @@ End Function
 
 
 '------------------------------------------------------------
+' GetEmployeeID
+'
+'------------------------------------------------------------
+Public Function GetEmployeeID(Login As String) As Long
+    On Error GoTo ErrHandler
+    Dim ID As Long
+    ID = DLookup("ID", EmployeeDB, "[Login]='" & Login & "'")
+    If IsNull(ID) Then
+        GetEmployeeID = 0
+    Else
+        GetEmployeeID = ID
+    End If
+    Exit Function
+ErrHandler:
+    GetEmployeeID = 0
+    Exit Function
+End Function
+
+
+'------------------------------------------------------------
+' GetEmployeeName
+'
+'------------------------------------------------------------
+Public Function GetEmployeeName(ID As Long)
+    GetEmployeeName = DLookup("FullName", EmployeeDB, "[ID]=" & ID)
+End Function
+
+
+'------------------------------------------------------------
+' GetEmployeeLogin
+'
+'------------------------------------------------------------
+Private Function GetEmployeeLogin(ID As Long)
+    GetEmployeeLogin = DLookup("Login", EmployeeDB, "[ID]=" & ID)
+End Function
+
+
+'------------------------------------------------------------
+' GetEmployeePassword
+'
+'------------------------------------------------------------
+Private Function GetEmployeePassword(ID As Long)
+    GetEmployeePassword = DLookup("Password", EmployeeDB, "[ID]=" & ID)
+End Function
+
+
+'------------------------------------------------------------
+' GetEmployeeRole
+'
+'------------------------------------------------------------
+Private Function GetEmployeeRole(ID As Long)
+    GetEmployeeRole = DLookup("Role", EmployeeDB, "[ID]=" & ID)
+End Function
+
+
+'------------------------------------------------------------
+' GetEmployeeRole
+'
+'------------------------------------------------------------
+Private Function GetEmployeeDefaultCategory(ID As Long)
+    GetEmployeeDefaultCategory = DLookup("DefaultCategory", EmployeeDB, "[ID]=" & ID)
+End Function
+
+
+'------------------------------------------------------------
 ' SelectFirstCategory
 '
 '------------------------------------------------------------
