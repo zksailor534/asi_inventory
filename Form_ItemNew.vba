@@ -71,16 +71,13 @@ On Error GoTo cmdSave_Click_Err
     If ValidateFields Then
         SaveItem
         SaveInventory
-        MsgBox "Save Completed", , "Saved"
+        MsgBox "Item Successfully Saved!", , "Save Complete"
         ClearFields
     Else
-        GoTo cmdSave_Click_Exit
+        MsgBox "Unable to save", , "Save Failed"
     End If
 
 cmdSave_Click_Exit:
-    If Not (Utilities.HasParent(Me)) Then
-        DoCmd.Close
-    End If
     Exit Sub
 
 cmdSave_Click_Err:

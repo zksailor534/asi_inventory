@@ -18,6 +18,13 @@ On Error GoTo Form_Load_Err
         Exit Sub
     End If
 
+    ' Check for valid employee
+    If Not (EmployeeID > 0) Then
+        MsgBox "User is invalid:" & vbCrLf & "Login as valid user", vbOKOnly, "Invalid User"
+        DoCmd.Close
+        Exit Sub
+    End If
+
     ' Open the recordset
     open_db
     Set rstItem = db.OpenRecordset("SELECT * FROM " & ItemDB & " WHERE [ID] = " & CurrentItemID)
@@ -39,9 +46,11 @@ End Sub
 '
 '------------------------------------------------------------
 Private Sub Form_Close()
-    ' Clean Up
-    rstItem.Close
-    Set rstItem = Nothing
+    If Not (rstItem Is Nothing) Then
+        ' Clean Up
+        rstItem.Close
+        Set rstItem = Nothing
+    End If
 End Sub
 
 
@@ -60,14 +69,13 @@ On Error GoTo cmdSave_Click_Err
     ' Check for valid field entries
     If ValidateFields Then
         SaveItem
+        MsgBox "Item Successfully Saved!", , "Save Complete"
+        FillFields
     Else
-        GoTo cmdSave_Click_Exit
+        MsgBox "Unable to save", , "Save Failed"
     End If
 
 cmdSave_Click_Exit:
-    If Not (Utilities.HasParent(Me)) Then
-        DoCmd.Close
-    End If
     Exit Sub
 
 cmdSave_Click_Err:
@@ -380,8 +388,6 @@ Private Sub SaveItem()
         !TopLiftHeight = TopLiftHeight
         !LowerLiftHeight = LowerLiftHeight
         !TopStepHeight = TopStepHeight
-        !CreateDate = Now()
-        !CreateOper = EmployeeLogin
         !LastChangeDate = Now()
         !LastChangeOper = EmployeeLogin
         .Update
