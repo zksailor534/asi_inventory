@@ -17,11 +17,13 @@ Private Sub Form_Open(Cancel As Integer)
 
     ' Default is only active commits
     ActiveToggle.Value = True
+    Me.sbfrmOrderSearch.Form.Controls("Status").ColumnHidden = True
 
     ' Engage filter from Committed status
     SalesOrderFiltered = ""
     CurrentSalesOrder = ""
     Me.sbfrmOrderSearch.Form.Filter = GetFilter(EmployeeRole, SalesOrderFiltered)
+    Me.sbfrmOrderSearch.Form.OrderBy = "DateActive DESC"
     Me.sbfrmOrderSearch.Form.FilterOn = True
 
     ' Set user role properties
@@ -55,6 +57,7 @@ Private Sub OrderFilterButton_Click()
         If ValidSalesOrder(SalesOrderFiltered) Then
             ' Engage filter from sales order selection
             Me.sbfrmOrderSearch.Form.Filter = GetFilter(EmployeeRole, SalesOrderFiltered)
+            Me.sbfrmOrderSearch.Form.OrderBy = "DateActive DESC"
             Me.sbfrmOrderSearch.Form.FilterOn = True
             CurrentSalesOrder = SalesOrderFiltered
         Else
@@ -73,6 +76,7 @@ Private Sub ClearFilterButton_Click()
     SalesOrderFiltered = ""
     CurrentSalesOrder = ""
     Me.sbfrmOrderSearch.Form.Filter = GetFilter(EmployeeRole, SalesOrderFiltered)
+    Me.sbfrmOrderSearch.Form.OrderBy = "DateActive DESC"
     Me.sbfrmOrderSearch.Form.FilterOn = True
     Me.sbfrmOrderSearch.Form.Requery
 End Sub
@@ -85,6 +89,13 @@ End Sub
 Private Sub ActiveToggle_Click()
     Me.sbfrmOrderSearch.Form.Filter = GetFilter(EmployeeRole, SalesOrderFiltered)
     Me.sbfrmOrderSearch.Form.FilterOn = True
+
+    If (ActiveToggle.Value = True) Then
+        Me.sbfrmOrderSearch.Form.Controls("Status").ColumnHidden = True
+    Else
+        Me.sbfrmOrderSearch.Form.Controls("Status").ColumnHidden = False
+    End If
+
     Me.sbfrmOrderSearch.Form.Requery
 End Sub
 
