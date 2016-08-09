@@ -3,8 +3,8 @@ Option Compare Database
 '------------------------------------------------------------
 ' American Surplus Inventory Database
 ' Author: Nathanael Greene
-' Current Revision: 2.1.1
-' Revision Date: 10/06/2015
+' Current Revision: 2.1.2
+' Revision Date: 10/09/2015
 '
 ' Revision History:
 '   2.0.0:  Initial Release replaces legacy database
@@ -34,13 +34,17 @@ Option Compare Database
 '           Added Record ID reservation system
 '           Add Inbound item toggle to InventoryManage (replace Print)
 '   2.1.1:  Bug fix (Commit_Complete)
+'   2.1.2:  Bug fix (NewRecordID) - not finding next record
+'               after full list
+'           Bug fix (CategoriesDS) - Field12 not being updated in form
+'           Bug fix (EmployeesDS) - Roles selector not working
 '------------------------------------------------------------
 
 '------------------------------------------------------------
 ' Global constants
 '
 '------------------------------------------------------------
-Public Const ReleaseVersion As String = "2.1.1"
+Public Const ReleaseVersion As String = "2.1.2"
 ''' User Roles
 Public Const DevelLevel As String = "Devel"
 Public Const AdminLevel As String = "Admin"
@@ -356,7 +360,7 @@ Public Function NewRecordID(strRecordPrefix As String, lowBound As Long) As Stri
     open_db
     Set rst = db.OpenRecordset(strSql)
 
-    If rst.RecordCount > 1 Then
+    If rst.RecordCount >= 1 Then
         With rst
             rst.MoveFirst
             Do While Not .EOF
@@ -368,6 +372,11 @@ Public Function NewRecordID(strRecordPrefix As String, lowBound As Long) As Stri
                     ' When low bound record is found, move to next
                     lowBound = lowBound + 1
                     rst.MoveNext
+                    If .EOF Then
+                        ' Capture next record
+                        NewRecordID = strRecordPrefix & "-" & Format(lowBound, "0000")
+                        GoTo CleanUp
+                    End If
                 Else
                     ' No record matches low bound, use it
                     NewRecordID = strRecordPrefix & "-" & Format(lowBound, "0000")
