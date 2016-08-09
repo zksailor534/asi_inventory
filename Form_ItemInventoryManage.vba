@@ -69,9 +69,6 @@ On Error GoTo cmdSave_Click_Err
     End If
 
 cmdSave_Click_Exit:
-    If Not (Utilities.HasParent(Me)) Then
-        DoCmd.Close
-    End If
     Exit Sub
 
 cmdSave_Click_Err:
@@ -119,6 +116,17 @@ Private Function ValidateFields() As Boolean
         GoTo ExitNow
     End If
 
+    ' Check if anything has changed
+    If (Location = rstInventory!Location) And CLng(OnHand) = rstInventory!OnHand And _
+        CLng(OnOrder) = rstInventory!OnOrder Then
+        MsgBox "Invalid Save:" & vbCrLf & "Nothing has changed", vbOKOnly, "Invalid Save"
+        Utilities.FieldErrorClear Me.Controls("Location")
+        Utilities.FieldErrorClear Me.Controls("OnHand")
+        Utilities.FieldErrorClear Me.Controls("OnOrder")
+        ValidateFields = False
+        GoTo ExitNow
+    End If
+
     ' Check for valid Location
     If (Location = "") Then
         Utilities.FieldErrorSet Me.Controls("Location")
@@ -128,7 +136,8 @@ Private Function ValidateFields() As Boolean
     End If
 
     ' Check for valid On Hand Quantity
-    If (OnHand = "") Or Not (IsNumeric(OnHand)) Or CLng(OnHand) < 0 Then
+    If (OnHand = "") Or Not (IsNumeric(OnHand)) Or _
+        CLng(OnHand) < CLng(Committed) Then
         Utilities.FieldErrorSet Me.Controls("OnHand")
         ValidateFields = False
     Else
@@ -158,11 +167,14 @@ Private Sub FillFields()
     Location = Nz(rstInventory!Location)
     OnHand = Nz(rstInventory!OnHand)
     OnOrder = Nz(rstInventory!OnOrder)
-    empID = Utilities.GetEmployeeID(rstInventory!LastOper)
-    If (empID <> 0) Then
-        LastOper = Utilities.GetEmployeeName(empID)
-    Else
-        LastOper = Nz(rstInventory!LastOper)
+
+    If Not IsNull(rstInventory!LastOper) Then
+        empID = Utilities.GetEmployeeID(rstInventory!LastOper)
+        If (empID <> 0) Then
+            LastOper = Utilities.GetEmployeeName(empID)
+        Else
+            LastOper = Nz(rstInventory!LastOper, "")
+        End If
     End If
 End Sub
 
