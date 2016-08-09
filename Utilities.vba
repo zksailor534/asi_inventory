@@ -3,7 +3,7 @@ Option Compare Database
 '------------------------------------------------------------
 ' American Surplus Inventory Database
 ' Author: Nathanael Greene
-' Current Revision: 2.03
+' Current Revision: 2.04
 ' Revision Date: 09/25/2015
 '
 ' Revision History:
@@ -20,13 +20,15 @@ Option Compare Database
 '               wrong sign (committing more)
 '               Added Record ID search to Inventory Manage
 '               Added scroll bar to ItemNew
+'   2.04:   Bug fix (Utilities) - Commit_Cancel & Commit_Complete
+'               missing recordset reference
 '------------------------------------------------------------
 
 '------------------------------------------------------------
 ' Global constants
 '
 '------------------------------------------------------------
-Public Const ReleaseVersion As String = "2.03"
+Public Const ReleaseVersion As String = "2.04"
 ''' User Roles
 Public Const DevelLevel As String = "Devel"
 Public Const AdminLevel As String = "Admin"
@@ -747,6 +749,8 @@ Public Function Commit_Cancel(rst As DAO.Recordset) As Boolean
                 !Status = "X"
                 !OperatorCancel = EmployeeLogin
                 !Committed = !Committed - !QtyCommitted
+                !LastOper = EmployeeLogin
+                !LastDate = Now()
                 .Update
             End With
         Else
