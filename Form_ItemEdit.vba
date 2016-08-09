@@ -309,33 +309,59 @@ End Function
 Private Sub SaveItem()
     ' Save Item Record
     With rstItem
+        .MoveFirst
         .Edit
         !Category = Category
         !RecordID = RecordID
         !Manufacturer = Manufacturer
         !Product = Product
         !Style = Style
-        !ItemLength = ItemLength
-        !ItemWidth = ItemWidth
-        !ItemHeight = ItemHeight
-        !ItemDepth = ItemDepth
+
+        If (ItemLength = "") Then
+            !ItemLength = Null
+        Else
+            !ItemLength = CLng(ItemLength)
+        End If
+
+        If (ItemWidth = "") Then
+            !ItemWidth = Null
+        Else
+            !ItemWidth = CLng(ItemWidth)
+        End If
+
+        If (ItemHeight = "") Then
+            !ItemHeight = Null
+        Else
+            !ItemHeight = CLng(ItemHeight)
+        End If
+
+        If (ItemDepth = "") Then
+            !ItemDepth = Null
+        Else
+            !ItemDepth = CLng(ItemDepth)
+        End If
+
         !RollerCenter = RollerCenter
         !Column = Column
         !Color = Color
         !Condition = Condition
         !Description = Description
         !Vendor = Vendor
-        !SuggSellingPrice = SuggSellingPrice
+
+        If (SuggSellingPrice = "") Then
+            !SuggSellingPrice = Null
+        Else
+            !SuggSellingPrice = CCur(SuggSellingPrice)
+        End If
+
         !Capacity = Capacity
         !BoltPattern = BoltPattern
         !HolePattern = HolePattern
         !Diameter = Diameter
         !Degree = Degree
-        !ShaftType = ShaftType
         !DriveType = DriveType
         !Gauge = Gauge
         !NumStruts = NumStruts
-        !LengthDriveInRail = LengthDriveInRail
         !NumSteps = NumSteps
         !Volts = Volts
         !Phase = Phase
