@@ -1,10 +1,9 @@
 Option Compare Database
 
-
 '------------------------------------------------------------
 ' American Surplus Inventory Database
 ' Author: Nathanael Greene
-' Current Revision: 2.1.0
+' Current Revision: 2.1.1
 ' Revision Date: 10/06/2015
 '
 ' Revision History:
@@ -34,14 +33,14 @@ Option Compare Database
 '           Upgraded NewRecordID calculation
 '           Added Record ID reservation system
 '           Add Inbound item toggle to InventoryManage (replace Print)
+'   2.1.1:  Bug fix (Commit_Complete)
 '------------------------------------------------------------
-
 
 '------------------------------------------------------------
 ' Global constants
 '
 '------------------------------------------------------------
-Public Const ReleaseVersion As String = "2.1.0"
+Public Const ReleaseVersion As String = "2.1.1"
 ''' User Roles
 Public Const DevelLevel As String = "Devel"
 Public Const AdminLevel As String = "Admin"
@@ -75,7 +74,6 @@ Public Const PrintRangeForm As String = "PrintRange"
 Public Const CategoriesEditForm As String = "CategoriesEdit"
 Public Const GenerateRecordIDForm As String = "GenerateRecordID"
 Public Const OrderCommitManageForm As String = "OrderCommitManage"
-
 
 '------------------------------------------------------------
 ' Application properties
@@ -866,7 +864,7 @@ Public Function Commit_Complete(ByRef rst As DAO.Recordset) As Boolean
                 GoTo Quantity_Err
             ElseIf (rst!Committed <= 0) Or (rst!QtyCommitted <= 0) Then
                 GoTo Quantity_Err
-            ElseIf ((!Committed - !QtyCommitted) < 0) Or ((!OnHand - !QtyCommitted) < 0) Then
+            ElseIf ((rst!Committed - rst!QtyCommitted) < 0) Or ((rst!OnHand - rst!QtyCommitted) < 0) Then
                 GoTo Quantity_Err
             End If
 
@@ -957,7 +955,9 @@ Public Function RecordIDReserve(ID As String, Category As String) As Boolean
     Set rst = db.OpenRecordset(ItemDB)
 
     ' Check to make sure that Record ID doesn't exist
+    Debug.Print DLookup("RecordID", ItemDB, "[RecordID]='" & ID & "'")
     If IsNull(DLookup("RecordID", ItemDB, "[RecordID]='" & ID & "'")) Then
+        Debug.Print ID
         ' Proceed to reserve Record ID
         With rst
             .AddNew
