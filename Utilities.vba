@@ -38,6 +38,7 @@ Public Const OperationDB As String = "Operations"
 Public Const EmployeeDB As String = "Employees"
 Public Const SettingsDB As String = "Settings"
 ''' Query Names
+Public Const WarehouseQuery As String = "qryItemWarehouse"
 Public Const CategoryQuery As String = "qryCategoryList"
 Public Const CommitQuery As String = "qryItemCommit"
 ''' Form Names

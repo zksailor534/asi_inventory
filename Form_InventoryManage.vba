@@ -68,6 +68,52 @@ End Sub
 
 
 '------------------------------------------------------------
+' RecordIDFilter_AfterUpdate
+'
+'------------------------------------------------------------
+Private Sub RecordIDFilter_AfterUpdate()
+    If Not (IsNull(RecordIDFilter)) Or (RecordIDFilter <> "") Then
+        OrderFilterButton_Click
+    End If
+End Sub
+
+
+'------------------------------------------------------------
+' OrderFilterButton_Click
+'
+'------------------------------------------------------------
+Private Sub OrderFilterButton_Click()
+    If IsNull(RecordIDFilter) Or (RecordIDFilter = "") Then
+        RecordIDFilter.SetFocus
+    Else
+        If ValidRecordID(RecordIDFilter) Then
+            ' Engage filter from RecordID selection
+            Me.sbfrmInvSearch.Form.Filter = "[Category]= '" & CategorySelected & _
+                "' AND [RecordID] = '" & RecordIDFilter & "'"
+            Me.sbfrmInvSearch.Form.FilterOn = True
+            CurrentItemID = GetRecordItemID(RecordIDFilter)
+        Else
+            RecordIDFilter = ""
+            RecordIDFilter.SetFocus
+        End If
+    End If
+End Sub
+
+
+'------------------------------------------------------------
+' ClearFilterButton_Click
+'
+'------------------------------------------------------------
+Private Sub ClearFilterButton_Click()
+    RecordIDFilter = ""
+    CurrentSalesOrder = ""
+    Me.sbfrmInvSearch.Form.Filter = "[Category]= '" & CategorySelected & "'"
+    Me.sbfrmInvSearch.Form.FilterOn = True
+    Me.sbfrmInvSearch.Form.Requery
+End Sub
+
+
+'------------------------------------------------------------
 ' EditItemButton_Click
 '
 '------------------------------------------------------------
@@ -239,3 +285,38 @@ Private Sub SetColumnVisibility()
     subForm.Available.ColumnHidden = False
 
 End Sub
+
+
+'------------------------------------------------------------
+' ValidRecordID
+'
+'------------------------------------------------------------
+Private Function ValidRecordID(RecordID As String) As Boolean
+    On Error Resume Next
+    If Not (IsNull(DLookup("RecordID", WarehouseQuery, "[Category]= '" & CategorySelected & _
+        "' AND [RecordID]='" & RecordID & "'"))) Then
+        ValidRecordID = True
+    Else
+        MsgBox "Invalid Record ID: Not Found", vbOKOnly, "Invalid Record ID"
+        ValidRecordID = False
+    End If
+End Function
+
+
+'------------------------------------------------------------
+' GetRecordItemID
+'
+'------------------------------------------------------------
+Private Function GetRecordItemID(RecordID As String) As Long
+    On Error Resume Next
+
+    Dim ItemId As Long
+
+    ItemId = DLookup("ID", WarehouseQuery, "[Category]= '" & CategorySelected & _
+        "' AND [RecordID]='" & RecordID & "'")
+    If Not (IsNull(ItemId)) Then
+        GetRecordItemID = ItemId
+    Else
+        GetRecordItemID = 0
+    End If
+End Function
