@@ -184,9 +184,9 @@ End Sub
 Private Sub updateManufacturerList()
     Dim sqlQuery As String
 
-    If (Product <> "") Then
+    If (Category <> "") Then
         sqlQuery = "SELECT DISTINCT Manufacturer FROM " & ItemDB & _
-            " WHERE Category.Value = " & categoryID & _
+            " WHERE Category = '" & Category & "' AND Manufacturer <> ''" & _
             " ORDER BY Manufacturer;"
         Manufacturer.RowSource = sqlQuery
     Else
@@ -204,7 +204,7 @@ Private Sub updateColumnList()
 
     If (Product <> "") Then
         sqlQuery = "SELECT DISTINCT Column FROM " & ItemDB & _
-            " WHERE Product = '" & Product & "'" & _
+            " WHERE Product = '" & Product & "' AND Column <> ''" & _
             " ORDER BY Column;"
         Column.RowSource = sqlQuery
     Else

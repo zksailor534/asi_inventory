@@ -158,9 +158,9 @@ End Sub
 Private Sub updateManufacturerList()
     Dim sqlQuery As String
 
-    If (Product <> "") Then
+    If (Category <> "") Then
         sqlQuery = "SELECT DISTINCT Manufacturer FROM " & ItemDB & _
-            " WHERE Category.Value = " & categoryID & _
+            " WHERE Category = '" & Category & "' AND Manufacturer <> ''" & _
             " ORDER BY Manufacturer;"
         Manufacturer.RowSource = sqlQuery
     Else
@@ -178,7 +178,7 @@ Private Sub updateColumnList()
 
     If (Product <> "") Then
         sqlQuery = "SELECT DISTINCT Column FROM " & ItemDB & _
-            " WHERE Product = '" & Product & "'" & _
+            " WHERE Product = '" & Product & "' AND Column <> ''" & _
             " ORDER BY Column;"
         Column.RowSource = sqlQuery
     Else
@@ -194,64 +194,73 @@ End Sub
 Private Sub FillFields()
     Dim empID As Long
 
-    Product = Nz(rstItem!Product)
+    Product = Nz(rstItem!Product, "")
     If (Product <> "") Then
         updateStyleList
+        updateColumnList
     End If
 
-    Category = Nz(rstItem!Category)
+    Category = Nz(rstItem!Category, "")
     If (Category <> "") Then
         updateProductList
+        updateManufacturerList
     End If
 
-    RecordID = Nz(rstItem!RecordID)
-    Manufacturer = Nz(rstItem!Manufacturer)
-    Style = Nz(rstItem!Style)
-    SuggSellingPrice = Nz(rstItem!SuggSellingPrice)
-    Color = Nz(rstItem!Color)
-    Condition = Nz(rstItem!Condition)
-    Vendor = Nz(rstItem!Vendor)
-    Description = Nz(rstItem!Description)
-    ItemLength = Nz(rstItem!ItemLength)
-    ItemWidth = Nz(rstItem!ItemWidth)
-    ItemHeight = Nz(rstItem!ItemHeight)
-    ItemDepth = Nz(rstItem!ItemDepth)
-    Capacity = Nz(rstItem!Capacity)
-    Column = Nz(rstItem!Column)
-    BoltPattern = Nz(rstItem!BoltPattern)
-    HolePattern = Nz(rstItem!HolePattern)
-    RollerCenter = Nz(rstItem!RollerCenter)
-    Diameter = Nz(rstItem!Diameter)
-    DriveType = Nz(rstItem!DriveType)
-    Degree = Nz(rstItem!Degree)
-    Volts = Nz(rstItem!Volts)
-    AmpHR = Nz(rstItem!AmpHR)
-    Phase = Nz(rstItem!Phase)
-    Serial = Nz(rstItem!Serial)
-    Gauge = Nz(rstItem!Gauge)
-    NumSteps = Nz(rstItem!NumSteps)
-    LowerLiftHeight = Nz(rstItem!LowerLiftHeight)
-    NumStruts = Nz(rstItem!NumStruts)
-    QtyDoors = Nz(rstItem!QtyDoors)
-    TopStepHeight = Nz(rstItem!TopStepHeight)
-    TopLiftHeight = Nz(rstItem!TopLiftHeight)
+    RecordID = Nz(rstItem!RecordID, "")
+    Manufacturer = Nz(rstItem!Manufacturer, "")
+    Style = Nz(rstItem!Style, "")
+    SuggSellingPrice = Nz(rstItem!SuggSellingPrice, "")
+    Color = Nz(rstItem!Color, "")
+    Condition = Nz(rstItem!Condition, "")
+    Vendor = Nz(rstItem!Vendor, "")
+    Description = Nz(rstItem!Description, "")
+    ItemLength = Nz(rstItem!ItemLength, "")
+    ItemWidth = Nz(rstItem!ItemWidth, "")
+    ItemHeight = Nz(rstItem!ItemHeight, "")
+    ItemDepth = Nz(rstItem!ItemDepth, "")
+    Capacity = Nz(rstItem!Capacity, "")
+    Column = Nz(rstItem!Column, "")
+    BoltPattern = Nz(rstItem!BoltPattern, "")
+    HolePattern = Nz(rstItem!HolePattern, "")
+    RollerCenter = Nz(rstItem!RollerCenter, "")
+    Diameter = Nz(rstItem!Diameter, "")
+    DriveType = Nz(rstItem!DriveType, "")
+    Degree = Nz(rstItem!Degree, "")
+    Volts = Nz(rstItem!Volts, "")
+    AmpHR = Nz(rstItem!AmpHR, "")
+    Phase = Nz(rstItem!Phase, "")
+    Serial = Nz(rstItem!Serial, "")
+    Gauge = Nz(rstItem!Gauge, "")
+    NumSteps = Nz(rstItem!NumSteps, "")
+    LowerLiftHeight = Nz(rstItem!LowerLiftHeight, "")
+    NumStruts = Nz(rstItem!NumStruts, "")
+    QtyDoors = Nz(rstItem!QtyDoors, "")
+    TopStepHeight = Nz(rstItem!TopStepHeight, "")
+    TopLiftHeight = Nz(rstItem!TopLiftHeight, "")
+    CreateOper = Nz(rstItem!CreateOper, "")
+    CreateDate = Nz(rstItem!CreateDate, "")
 
-    ' Last change user and date
-    If rstItem!LastChangeDate <> 0 Then
+    ' Last change user or create user
+    If Not IsNull(rstItem!LastChangeOper) Then
         empID = Utilities.GetEmployeeID(rstItem!LastChangeOper)
         If (empID <> 0) Then
             LastOper = Utilities.GetEmployeeName(empID)
         Else
             LastOper = Nz(rstItem!LastChangeOper, "")
         End If
-        LastDate = Nz(rstItem!LastChangeDate)
-    Else
+    ElseIf Not IsNull(rstItem!CreateOper) Then
         empID = Utilities.GetEmployeeID(rstItem!CreateOper)
         If (empID <> 0) Then
             LastOper = Utilities.GetEmployeeName(empID)
         Else
             LastOper = Nz(rstItem!CreateOper, "")
         End If
+    End If
+
+    ' Last change date
+    If rstItem!LastChangeDate <> 0 Then
+        LastDate = Nz(rstItem!LastChangeDate)
+    ElseIf rstItem!CreateDate <> 0 Then
         LastDate = Nz(rstItem!CreateDate)
     End If
 End Sub
