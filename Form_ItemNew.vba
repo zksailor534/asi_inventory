@@ -1,6 +1,6 @@
 Option Compare Database
 
-Private rstNewItem As DAO.Recordset
+Private rstItem As DAO.Recordset
 Private rstNewInventory As DAO.Recordset
 
 '------------------------------------------------------------
@@ -14,7 +14,7 @@ On Error GoTo Form_Load_Err
 
     ' Open recordsets
     open_db
-    Set rstNewItem = db.OpenRecordset(ItemDB, Options:=dbSeeChanges)
+    Set rstItem = db.OpenRecordset(ItemDB, Options:=dbSeeChanges)
     Set rstNewInventory = db.OpenRecordset(InventoryDB)
 
 Form_Load_Exit:
@@ -33,9 +33,9 @@ End Sub
 '------------------------------------------------------------
 Private Sub Form_Close()
     ' Clean Up
-    rstNewItem.Close
+    rstItem.Close
     rstNewInventory.Close
-    Set rstNewItem = Nothing
+    Set rstItem = Nothing
     Set rstNewInventory = Nothing
 End Sub
 
@@ -69,7 +69,13 @@ On Error GoTo cmdSave_Click_Err
 
     ' Check for valid field entries
     If ValidateFields Then
-        SaveItem
+        If (RecordID.ListIndex = -1) Then
+            SaveNewItem
+        Else
+            Set rstItem = db.OpenRecordset("SELECT TOP 1 * FROM " & ItemDB & _
+                " WHERE [RecordID] = '" & RecordID & "'")
+            SaveReservedItem
+        End If
         SaveInventory
         MsgBox "Item Successfully Saved!", , "Save Complete"
         ClearFields
@@ -94,6 +100,7 @@ End Sub
 Private Sub Category_AfterUpdate()
     If (Category <> "") Then
         updatePrefix
+        updateReservedRecordIDs
         updateProductList
         updateManufacturerList
     End If
@@ -150,8 +157,26 @@ Private Sub updateProductList()
 
     CategoryID = Utilities.GetCategoryID(Category)
     If (CategoryID <> 0) Then
-        sqlQuery = "SELECT ProductName FROM " & ProductDB & " WHERE Category.Value = " & CategoryID
+        sqlQuery = "SELECT ProductName FROM " & ProductQuery & " WHERE Category.Value = " & CategoryID
         Product.RowSource = sqlQuery
+    End If
+End Sub
+
+
+'------------------------------------------------------------
+' updateReservedRecordIDs
+' Update Record ID Combo box with any reserved Record IDs
+'------------------------------------------------------------
+Private Sub updateReservedRecordIDs()
+    Dim CategoryID As Long
+    Dim sqlQuery As String
+
+    CategoryID = Utilities.GetCategoryID(Category)
+    If (CategoryID <> 0) Then
+        sqlQuery = "SELECT [RecordID],[VENDOR] FROM " & ItemDB & _
+            " WHERE Category = '" & Category & "' AND [Vendor] = 'RESERVED'" & _
+            " AND CreateOper = '" & EmployeeLogin & "'"
+        RecordID.RowSource = sqlQuery
     End If
 End Sub
 
@@ -220,7 +245,7 @@ End Sub
 
 
 '------------------------------------------------------------
-' cmdNewProduct_Click
+' cmdNewRecordID_Click
 '
 '------------------------------------------------------------
 Private Sub cmdNewRecordID_Click()
@@ -237,7 +262,7 @@ End Sub
 '
 '------------------------------------------------------------
 Private Function ValidateFields() As Boolean
-
+    Dim locationPrompt As Integer
     ValidateFields = True
 
     ' Check for valid user
@@ -252,7 +277,19 @@ Private Function ValidateFields() As Boolean
         Utilities.FieldErrorSet Me.Controls("Location")
         ValidateFields = False
     Else
-        Utilities.FieldErrorClear Me.Controls("Location")
+        If (Location = "INBOUND") Then
+            ' Check if item is on order
+            locationPrompt = MsgBox("Is this Item On Order?", vbYesNo, "On Order")
+            If (locationPrompt = vbNo) Then
+                MsgBox "Choose a valid Location", , "Invalid Location"
+                Utilities.FieldErrorSet Me.Controls("Location")
+                ValidateFields = False
+            Else
+                Utilities.FieldErrorClear Me.Controls("Location")
+            End If
+        Else
+            Utilities.FieldErrorClear Me.Controls("Location")
+        End If
     End If
 
     ' Check for valid Quantity
@@ -271,8 +308,8 @@ Private Function ValidateFields() As Boolean
         Utilities.FieldErrorClear Me.Controls("Category")
     End If
 
-    ' Check for valid Product (TBD: expand for Product List)
-    If (Product = "") Then
+    ' Check for valid Product
+    If Not (Utilities.IsValidProduct(Product)) Then
         Utilities.FieldErrorSet Me.Controls("Product")
         ValidateFields = False
     Else
@@ -287,6 +324,16 @@ Private Function ValidateFields() As Boolean
         Utilities.FieldErrorClear Me.Controls("RecordID")
     End If
 
+    ' Check for valid suggested price
+    If (SuggSellingPrice <> "") Then
+        If Not (IsNumeric(SuggSellingPrice)) Then
+            Utilities.FieldErrorSet Me.Controls("SuggSellingPrice")
+            ValidateFields = False
+        Else
+            Utilities.FieldErrorClear Me.Controls("SuggSellingPrice")
+        End If
+    End If
+
 ExitNow:
     Exit Function
 
@@ -294,12 +341,12 @@ End Function
 
 
 '------------------------------------------------------------
-' SaveItem
+' SaveNewItem
 '
 '------------------------------------------------------------
-Private Sub SaveItem()
+Private Sub SaveNewItem()
     ' Save Item Record
-    With rstNewItem
+    With rstItem
         .AddNew
         !Category = Category
         !RecordID = RecordID
@@ -310,25 +357,25 @@ Private Sub SaveItem()
         If IsNull(ItemLength) Or Not (IsNumeric(ItemLength)) Then
             !ItemLength = Null
         Else
-            !ItemLength = CLng(ItemLength)
+            !ItemLength = CSng(ItemLength)
         End If
 
         If IsNull(ItemWidth) Or Not (IsNumeric(ItemWidth)) Then
             !ItemWidth = Null
         Else
-            !ItemWidth = CLng(ItemWidth)
+            !ItemWidth = CSng(ItemWidth)
         End If
 
         If IsNull(ItemHeight) Or Not (IsNumeric(ItemHeight)) Then
             !ItemHeight = Null
         Else
-            !ItemHeight = CLng(ItemHeight)
+            !ItemHeight = CSng(ItemHeight)
         End If
 
         If IsNull(ItemDepth) Or Not (IsNumeric(ItemDepth)) Then
             !ItemDepth = Null
         Else
-            !ItemDepth = CLng(ItemDepth)
+            !ItemDepth = CSng(ItemDepth)
         End If
 
         !RollerCenter = RollerCenter
@@ -369,8 +416,88 @@ Private Sub SaveItem()
     End With
 
     ' Get new record ID
-    rstNewItem.Bookmark = rstNewItem.LastModified
-    ItemId = rstNewItem("ID")
+    rstItem.Bookmark = rstItem.LastModified
+    ItemId = rstItem("ID")
+End Sub
+
+
+'------------------------------------------------------------
+' SaveReservedItem
+'
+'------------------------------------------------------------
+Private Sub SaveReservedItem()
+    ' Save Item Record
+    With rstItem
+        .MoveFirst
+        .Edit
+        !Category = Category
+        !RecordID = RecordID
+        !Manufacturer = Manufacturer
+        !Product = Product
+        !Style = Style
+
+        If IsNull(ItemLength) Or Not (IsNumeric(ItemLength)) Then
+            !ItemLength = Null
+        Else
+            !ItemLength = CSng(ItemLength)
+        End If
+
+        If IsNull(ItemWidth) Or Not (IsNumeric(ItemWidth)) Then
+            !ItemWidth = Null
+        Else
+            !ItemWidth = CSng(ItemWidth)
+        End If
+
+        If IsNull(ItemHeight) Or Not (IsNumeric(ItemHeight)) Then
+            !ItemHeight = Null
+        Else
+            !ItemHeight = CSng(ItemHeight)
+        End If
+
+        If IsNull(ItemDepth) Or Not (IsNumeric(ItemDepth)) Then
+            !ItemDepth = Null
+        Else
+            !ItemDepth = CSng(ItemDepth)
+        End If
+
+        !RollerCenter = RollerCenter
+        !Column = Column
+        !Color = Color
+        !Condition = Condition
+        !Description = Description
+        !Vendor = Vendor
+
+        If IsNull(SuggSellingPrice) Or Not (IsNumeric(SuggSellingPrice)) Then
+            !SuggSellingPrice = Null
+        Else
+            !SuggSellingPrice = CCur(SuggSellingPrice)
+        End If
+
+        !Capacity = Capacity
+        !BoltPattern = BoltPattern
+        !HolePattern = HolePattern
+        !Diameter = Diameter
+        !Degree = Degree
+        !DriveType = DriveType
+        !Gauge = Gauge
+        !NumStruts = NumStruts
+        !NumSteps = NumSteps
+        !Volts = Volts
+        !Phase = Phase
+        !AmpHR = AmpHR
+        !Serial = Serial
+        !QtyDoors = QtyDoors
+        !TopLiftHeight = TopLiftHeight
+        !LowerLiftHeight = LowerLiftHeight
+        !TopStepHeight = TopStepHeight
+        !LastChangeDate = Now()
+        !LastChangeOper = EmployeeLogin
+        .Update
+    End With
+
+    ' Save new item ID for Inventory entry
+    rstItem.Bookmark = rstItem.LastModified
+    ItemId = rstItem("ID")
 End Sub
 
 
@@ -384,7 +511,13 @@ Private Sub SaveInventory()
         .AddNew
         !ItemId = ItemId
         !Location = Location
-        !OnHand = Quantity
+
+        If (Location = "INBOUND") Then
+            !OnOrder = Quantity
+        Else
+            !OnHand = Quantity
+        End If
+
         !OrigQty = Quantity
         !LastOper = EmployeeLogin
         !LastDate = Now()

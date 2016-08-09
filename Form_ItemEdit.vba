@@ -306,11 +306,13 @@ Private Function ValidateFields() As Boolean
     End If
 
     ' Check for valid Record ID
-    If Not (Utilities.IsValidRecordID(RecordID)) Then
-        Utilities.FieldErrorSet Me.Controls("RecordID")
-        ValidateFields = False
-    Else
-        Utilities.FieldErrorClear Me.Controls("RecordID")
+    If (RecordID <> rstItem!RecordID) Then
+        If Not (Utilities.IsValidRecordID(RecordID)) Then
+            Utilities.FieldErrorSet Me.Controls("RecordID")
+            ValidateFields = False
+        Else
+            Utilities.FieldErrorClear Me.Controls("RecordID")
+        End If
     End If
 
 ExitNow:
