@@ -14,6 +14,8 @@ End Property
 Private Sub Form_Click()
     On Error Resume Next
     m_nHt = Me.SelHeight
+    CurrentCommitID = Me.CommitID
+    CurrentSalesOrder = Me.Reference
     Exit Sub
 
 ErrHandler:
