@@ -3,7 +3,7 @@ Option Explicit
 
 
 '------------------------------------------------------------
-' RecalcCommitButton_Click
+' Form_Load
 '
 '------------------------------------------------------------
 Private Sub Form_Load()
@@ -21,6 +21,28 @@ End Sub
 Private Sub RecalcCommitButton_Click()
 
     Utilities.RecalculateCommit
+
+End Sub
+
+
+'------------------------------------------------------------
+' RecalcOrigQtyButton_Click
+'
+'------------------------------------------------------------
+Private Sub RecalcOrigQtyButton_Click()
+
+    Utilities.RecalculateOriginalQuantity
+
+End Sub
+
+
+'------------------------------------------------------------
+' ReclaimRecordIDButton_Click
+'
+'------------------------------------------------------------
+Private Sub ReclaimRecordIDButton_Click()
+
+    Utilities.ReclaimRecordIDs
 
 End Sub
 

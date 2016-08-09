@@ -463,166 +463,149 @@ End Sub
 
 
 '------------------------------------------------------------
-' NewRecordID
+' RecalculateOriginalQuantity
 '
 '------------------------------------------------------------
-Public Function NewRecordID(strRecordPrefix As String, lowBound As Long) As String
+Public Sub RecalculateOriginalQuantity()
 
-    Dim rst As DAO.Recordset
-    Dim strSql As String
-    Dim arrayDim As Boolean
-    Dim ind As Integer
-    Dim recordArray() As Long
-    Dim sortedArray() As Long
+    Dim rstCommit, rstInventory As DAO.Recordset
+    Dim sqlQuery As String
+    Dim qty, count As Long
 
-    strSql = "SELECT [RecordID]" & _
-        " FROM " & ItemDB & _
-        " WHERE [RecordID]" & _
-        " LIKE '" & strRecordPrefix & "-*'" & _
-        " ORDER BY [RecordID]"
+    ' Open database
     open_db
-    Set rst = db.OpenRecordset(strSql, dbOpenSnapshot)
 
-    If rst.RecordCount > 1 Then
-        With rst
-            rst.MoveFirst
-            Do While Not .EOF
-                If arrayDim = True Then
-                    ReDim Preserve recordArray(1 To UBound(recordArray) + 1) As Long
-                Else
-                    ReDim recordArray(1 To 1) As Long
-                    arrayDim = True
-                End If
-                recordArray(UBound(recordArray)) = StripRecordID(strRecordPrefix, !RecordID)
-                rst.MoveNext
+    ' Open recordsets
+    Set rstInventory = db.OpenRecordset(InventoryDB)
+
+    ' Initialize progress meter
+    rstInventory.MoveLast
+    count = rstInventory.RecordCount
+    SysCmd acSysCmdInitMeter, "Recalculating original quantities...", count
+
+    ' Loop over all items in inventory
+    rstInventory.MoveFirst
+    For progress_amount = 1 To count
+        ' Update the progress meter
+         SysCmd acSysCmdUpdateMeter, progress_amount
+
+        ' Open active commit table entries for given item
+        sqlQuery = "SELECT QtyCommitted FROM " & CommitDB & _
+            " WHERE [Status] = 'C' AND [ItemID] = " & rstInventory!ItemId
+        Set rstCommit = db.OpenRecordset(sqlQuery)
+
+        If Not (rstCommit.EOF) Then
+            ' Get current quantity
+            qty = rstInventory!OnHand
+
+            ' Get sum of active commit entries
+            rstCommit.MoveFirst
+            Do While Not rstCommit.EOF
+                qty = qty + CInt(rstCommit!QtyCommitted)
+                rstCommit.MoveNext
             Loop
-        End With
-    ElseIf rst.RecordCount = 1 Then
-        If StripRecordID(strRecordPrefix, rst!RecordID) = lowBound Then
-            lowBound = lowBound + 1
-        End If
-        NewRecordID = strRecordPrefix & "-" & Format(lowBound, "0000")
-    ElseIf rst.RecordCount = 0 Then
-        NewRecordID = strRecordPrefix & "-" & Format(lowBound, "0000")
-    End If
 
-    If (IsInitialized(recordArray)) Then
-        sortedArray = RemoveDups(recordArray)
-        For ind = lowBound To UBound(sortedArray)
-            If (sortedArray(ind) >= lowBound) Then
-                If (lowBound <> sortedArray(ind)) Then
-                    NewRecordID = strRecordPrefix & "-" & Format(lowBound, "0000")
-                    Exit For
-                Else
-                    lowBound = lowBound + 1
-                End If
-            Else
-                Exit For
+            ' Compare calculated quantity with Inventory table
+            If IsNull(rstInventory!OrigQty) Then
+                rstInventory.Edit
+                rstInventory!OrigQty = qty
+                rstInventory.Update
+            ElseIf (CInt(rstInventory!OrigQty) <> qty) Then
+                rstInventory.Edit
+                rstInventory!OrigQty = qty
+                rstInventory.Update
             End If
-        Next ind
-    Else
-        NewRecordID = strRecordPrefix & "-" & Format(lowBound, "0000")
-    End If
-
-CleanUp:
-    rst.Close
-    Set rst = Nothing
-    Set db = Nothing
-
-End Function
-
-
-'------------------------------------------------------------
-' BubbleSrt
-' Sort array
-'------------------------------------------------------------
-Private Function BubbleSrt(ArrayIn() As Long, Ascending As Boolean) As Long()
-
-    Dim SrtTemp As Long
-    Dim i As Long
-    Dim j As Long
-
-
-    If Ascending = True Then
-        For i = LBound(ArrayIn) To UBound(ArrayIn)
-             For j = i + 1 To UBound(ArrayIn)
-                 If ArrayIn(i) > ArrayIn(j) Then
-                     SrtTemp = ArrayIn(j)
-                     ArrayIn(j) = ArrayIn(i)
-                     ArrayIn(i) = SrtTemp
-                 End If
-             Next j
-         Next i
-    Else
-        For i = LBound(ArrayIn) To UBound(ArrayIn)
-             For j = i + 1 To UBound(ArrayIn)
-                 If ArrayIn(i) < ArrayIn(j) Then
-                     SrtTemp = ArrayIn(j)
-                     ArrayIn(j) = ArrayIn(i)
-                     ArrayIn(i) = SrtTemp
-                 End If
-             Next j
-         Next i
-    End If
-
-    BubbleSrt = RemoveDups(ArrayIn)
-
-End Function
-
-
-'------------------------------------------------------------
-' RemoveDups
-' Remove duplicates from array
-'------------------------------------------------------------
-Private Function RemoveDups(intArray() As Long) As Long()
-
-    Dim old_i As Integer
-    Dim last_i As Integer
-    Dim low_i, high_i As Integer
-    Dim result() As Long
-
-    ' Get the lower and upper bounds
-    low_i = LBound(intArray)
-    high_i = UBound(intArray)
-
-    ' Make the result array.
-    ReDim result(low_i To high_i)
-
-    ' Copy the first item into the result array.
-    result(low_i) = intArray(low_i)
-
-    ' Copy the other items
-    last_i = low_i
-    For old_i = (low_i + 1) To high_i
-        If result(last_i) <> intArray(old_i) Then
-            ' No duplicate found
-            last_i = last_i + 1
-            result(last_i) = intArray(old_i)
+        ElseIf IsNull(rstInventory!OrigQty) Then
+            rstInventory.Edit
+            rstInventory!OrigQty = rstInventory!OnHand
+            rstInventory.Update
+        ElseIf (CInt(rstInventory!OnHand) <> CInt(rstInventory!OrigQty)) Then
+            rstInventory.Edit
+            rstInventory!OrigQty = rstInventory!OnHand
+            rstInventory.Update
         End If
-    Next old_i
+        rstInventory.MoveNext
+   Next progress_amount
 
-    ' Remove unused entries from the result array.
-    ReDim Preserve result(low_i To last_i)
+   ' Remove the progress meter.
+   SysCmd acSysCmdRemoveMeter
 
-    ' Return the result array.
-    RemoveDups = result
-End Function
+    ' Clean up
+    rstCommit.Close
+    rstInventory.Close
+    Set rstCommit = Nothing
+    Set rstInventory = Nothing
+End Sub
 
 
 '------------------------------------------------------------
-' IsInitialized
-' Check if array of Long integers is initialized
+' ReclaimRecordIDs
+'
 '------------------------------------------------------------
-Private Function IsInitialized(arr() As Long) As Boolean
-    On Error GoTo ErrHandler
-    Dim nUbound As Long
-    nUbound = UBound(arr)
-    IsInitialized = True
-    Exit Function
-ErrHandler:
-    IsInitialized = False
-    Exit Function
-End Function
+Public Sub ReclaimRecordIDs()
+
+    Dim rstCommit, rstInventory, rstItem As DAO.Recordset
+    Dim invQuery, comQuery As String
+    Dim count As Long
+    Dim pregress_amount As Integer
+
+    ' Open database
+    open_db
+
+    ' Open item recordset
+    Set rstItem = db.OpenRecordset("SELECT * FROM " & ItemDB & " ORDER BY ID;")
+
+    ' Initialize progress meter
+    rstItem.MoveLast
+    count = rstItem.RecordCount
+    SysCmd acSysCmdInitMeter, "Reclaiming unused Record IDs...", count
+
+    ' Loop over all items
+    rstItem.MoveFirst
+    For progress_amount = 1 To count
+        ' Update the progress meter
+         SysCmd acSysCmdUpdateMeter, progress_amount
+
+        ' Check if Record ID has already been reclaimed
+        If Not (rstItem!RecordID = "---") Then
+
+            ' Get commit record
+            comQuery = "SELECT TOP 1 * FROM " & CommitDB & " WHERE [ItemID] = " & rstItem!ID
+            Set rstCommit = db.OpenRecordset(comQuery)
+
+            If (rstCommit.RecordCount = 0) Then
+
+                ' Get inventory record
+                invQuery = "SELECT TOP 1 * FROM " & InventoryDB & " WHERE [ItemID] = " & rstItem!ID
+                Set rstInventory = db.OpenRecordset(invQuery)
+
+                If (rstInventory.RecordCount = 0) Then
+                    ' Remove record if no inventory or commit entry exists
+                    rstItem.Delete
+                ElseIf (rstInventory!OnHand = 0) Then
+                    ' Set RecordID to "---" if no quantity remains
+                    rstItem.Edit
+                    rstItem!RecordID = "---"
+                    rstItem.Update
+                End If
+            End If
+        End If
+
+        ' Go to the next record
+         rstItem.MoveNext
+   Next progress_amount
+
+   ' Remove the progress meter
+   SysCmd acSysCmdRemoveMeter
+
+    ' Clean up
+    rstItem.Close
+    rstCommit.Close
+    rstInventory.Close
+    Set rstCommit = Nothing
+    Set rstInventory = Nothing
+    Set rstItem = Nothing
+End Sub
 
 
 '------------------------------------------------------------
