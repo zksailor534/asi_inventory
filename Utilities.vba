@@ -258,6 +258,59 @@ End Function
 
 
 '------------------------------------------------------------
+' NewRecordID
+'
+'------------------------------------------------------------
+Public Function NewRecordID(strRecordPrefix As String, lowBound As Long) As String
+
+    Dim rst As DAO.Recordset
+    Dim strSql As String
+    Dim arrayDim As Boolean
+    Dim ind As Integer
+    Dim recordNumber As Long
+    Dim recordArray() As Long
+    Dim sortedArray() As Long
+
+    strSql = "SELECT DISTINCT [RecordID]" & " FROM " & ItemDB & _
+        " WHERE [RecordID]" & " LIKE '" & strRecordPrefix & "-*'" & _
+        " ORDER BY [RecordID];"
+
+    open_db
+    Set rst = db.OpenRecordset(strSql)
+
+    If rst.RecordCount > 1 Then
+        With rst
+            rst.MoveFirst
+            Do While Not .EOF
+                recordNumber = StripRecordID(strRecordPrefix, !RecordID)
+                If (lowBound > recordNumber) Then
+                    ' Skip numbers below low bound
+                    rst.MoveNext
+                ElseIf (lowBound = recordNumber) Then
+                    ' When low bound record is found, move to next
+                    lowBound = lowBound + 1
+                    rst.MoveNext
+                Else
+                    ' No record matches low bound, use it
+                    NewRecordID = strRecordPrefix & "-" & Format(lowBound, "0000")
+                    GoTo CleanUp
+                End If
+            Loop
+        End With
+    Else
+        ' No records found, use low bound
+        NewRecordID = strRecordPrefix & "-" & Format(lowBound, "0000")
+    End If
+
+CleanUp:
+    rst.Close
+    Set rst = Nothing
+    Set db = Nothing
+
+End Function
+
+
+'------------------------------------------------------------
 ' FieldExists
 '
 '------------------------------------------------------------
@@ -276,71 +329,6 @@ Public Function FieldExists(ByVal tableName As String, ByVal fieldName As String
 Failed:
     If Err.Number = 3265 Then Err.Clear ' Error 3265 : Item not found in this collection.
     FieldExists = False
-End Function
-
-
-'------------------------------------------------------------
-' GetEmployeeID
-'
-'------------------------------------------------------------
-Public Function GetEmployeeID(Login As String) As Long
-    On Error GoTo ErrHandler
-    Dim ID As Long
-    ID = DLookup("ID", EmployeeDB, "[Login]='" & Login & "'")
-    If IsNull(ID) Then
-        GetEmployeeID = 0
-    Else
-        GetEmployeeID = ID
-    End If
-    Exit Function
-ErrHandler:
-    GetEmployeeID = 0
-    Exit Function
-End Function
-
-
-'------------------------------------------------------------
-' GetEmployeeName
-'
-'------------------------------------------------------------
-Public Function GetEmployeeName(ID As Long)
-    GetEmployeeName = DLookup("FullName", EmployeeDB, "[ID]=" & ID)
-End Function
-
-
-'------------------------------------------------------------
-' GetEmployeeLogin
-'
-'------------------------------------------------------------
-Private Function GetEmployeeLogin(ID As Long)
-    GetEmployeeLogin = DLookup("Login", EmployeeDB, "[ID]=" & ID)
-End Function
-
-
-'------------------------------------------------------------
-' GetEmployeePassword
-'
-'------------------------------------------------------------
-Private Function GetEmployeePassword(ID As Long)
-    GetEmployeePassword = DLookup("Password", EmployeeDB, "[ID]=" & ID)
-End Function
-
-
-'------------------------------------------------------------
-' GetEmployeeRole
-'
-'------------------------------------------------------------
-Private Function GetEmployeeRole(ID As Long)
-    GetEmployeeRole = DLookup("Role", EmployeeDB, "[ID]=" & ID)
-End Function
-
-
-'------------------------------------------------------------
-' GetEmployeeRole
-'
-'------------------------------------------------------------
-Private Function GetEmployeeDefaultCategory(ID As Long)
-    GetEmployeeDefaultCategory = DLookup("DefaultCategory", EmployeeDB, "[ID]=" & ID)
 End Function
 
 
