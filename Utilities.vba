@@ -11,12 +11,15 @@ Option Compare Database
 '           Complete GUI overhaul
 '           Introduction of product-based structure
 '           Add Generate Record ID tools
+'   2.01:   Bug fixes (ItemEdit, ItemNew, ItemInventoryManage,
+'               Main, CategoriesEdit)
 '------------------------------------------------------------
 
 '------------------------------------------------------------
 ' Global constants
 '
 '------------------------------------------------------------
+Public Const ReleaseVersion As String = "2.01"
 ''' User Roles
 Public Const DevelLevel As String = "Devel"
 Public Const AdminLevel As String = "Admin"
@@ -165,6 +168,7 @@ On Error GoTo CompleteLogin_Err
     DoCmd.Close acForm, MainForm, acSaveNo
     DoCmd.OpenForm MainForm
     Forms(MainForm)!lblCurrentEmployeeName.Caption = "Hello, " & EmployeeName
+    Forms(MainForm)!lblVersion.Caption = "Version " & ReleaseVersion
     Forms(MainForm)!nvbInventory.SetFocus
     Err.Clear
 
