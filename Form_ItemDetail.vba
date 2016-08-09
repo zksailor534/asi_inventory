@@ -43,7 +43,7 @@ Private Sub cmdCommit_Click()
 
     qtyAvailable = Me.OnHand + Me.OnOrder - Me.Committed
     ' Check quantity available
-    If (qtyAvailable < 0) Then
+    If (qtyAvailable <= 0) Then
         MsgBox "Available Quantity must be greater than Zero" & vbCrLf & _
             "Contact Administrator", , "Invalid Quantity Available"
         GoTo cmdCommit_Click_Exit
