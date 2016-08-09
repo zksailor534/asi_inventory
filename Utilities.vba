@@ -729,12 +729,19 @@ Public Function Commit_Cancel(rst As DAO.Recordset) As Boolean
     rst.MoveFirst
     Do While Not rst.EOF
         If (rst!Status = "A") Then
+            ' Check existing available quantity
+            If (rst!OnHand < 0) Or (rst!OnHand < rst!Committed) Then
+                GoTo Quantity_Err
+            ElseIf (rst!Committed <= 0) Or (rst!QtyCommitted <= 0) Then
+                GoTo Quantity_Err
+            End If
+
             With rst
                 .Edit
                 !DateCancel = Now()
                 !Status = "X"
                 !OperatorCancel = EmployeeLogin
-                !Committed = !Committed + !QtyCommitted
+                !Committed = !Committed - !QtyCommitted
                 .Update
             End With
         Else
@@ -751,7 +758,20 @@ Commit_Cancel_Exit:
 Commit_Cancel_Err:
     MsgBox "Error: (" & Err.Number & ") " & Err.Description, vbCritical
     Commit_Cancel = False
-    Resume Commit_Cancel_Exit
+    GoTo Commit_Cancel_Exit
+
+Status_Err:
+    MsgBox "Error: " & vbCrLf & "Cannot Delete Commit " & rst!ID & vbCrLf & _
+        "Commit must be active", , "Status Error"
+    Commit_Cancel = False
+    GoTo Commit_Cancel_Exit
+
+Quantity_Err:
+    MsgBox "Error: " & vbCrLf & "Cannot Delete Commit " & rst!ID & vbCrLf & _
+        "Commit Quantity or Item Available Quantity are invalid", , "Quantity Error"
+    Commit_Cancel = False
+    GoTo Commit_Cancel_Exit
+
 End Function
 
 
@@ -765,6 +785,13 @@ Public Function Commit_Complete(ByRef rst As DAO.Recordset) As Boolean
     rst.MoveFirst
     Do While Not rst.EOF
         If (rst!Status = "A") Then
+            ' Check existing available quantity
+            If (rst!OnHand < 0) Or (rst!OnHand < rst!Committed) Then
+                GoTo Quantity_Err
+            ElseIf (rst!Committed <= 0) Or (rst!QtyCommitted <= 0) Then
+                GoTo Quantity_Err
+            End If
+
             With rst
                 .Edit
                 !DateComplete = Now()
@@ -777,7 +804,7 @@ Public Function Commit_Complete(ByRef rst As DAO.Recordset) As Boolean
                 .Update
             End With
         Else
-            GoTo Commit_Complete_Err
+            GoTo Status_Err
         End If
         rst.MoveNext
     Loop
@@ -790,7 +817,20 @@ Commit_Complete_Exit:
 Commit_Complete_Err:
     MsgBox "Error: (" & Err.Number & ") " & Err.Description, vbCritical
     Commit_Complete = False
-    Resume Commit_Complete_Exit
+    GoTo Commit_Complete_Exit
+
+Status_Err:
+    MsgBox "Error: " & vbCrLf & "Cannot Complete Commit " & rst!ID & vbCrLf & _
+        "Commit must be active", , "Status Error"
+    Commit_Complete = False
+    GoTo Commit_Complete_Exit
+
+Quantity_Err:
+    MsgBox "Error: " & vbCrLf & "Cannot Complete Commit " & rst!ID & vbCrLf & _
+        "Commit Quantity or Item Available Quantity are invalid", , "Quantity Error"
+    Commit_Complete = False
+    GoTo Commit_Complete_Exit
+
 End Function
 
 

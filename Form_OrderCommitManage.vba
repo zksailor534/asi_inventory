@@ -122,7 +122,8 @@ On Error GoTo cmdSave_Click_Err
     If (QtyAdjustCheck.Value = True) Then
         If (CLng(NewQuantity) >= (Committed - rstCommit!QtyCommitted + QtyCommitted)) Then
             Utilities.OperationEntry rstCommit!ID, "Inventory", _
-                "Changed quantity from " & rstCommit!OnHand & " to " & NewQuantity
+                "Changed OnHand from " & rstCommit!OnHand & " to " & NewQuantity & _
+                    " in Commit " & CurrentCommitID
         Else
             GoTo cmdSave_QtyAdjust_Err
         End If
@@ -203,7 +204,8 @@ On Error GoTo cmdDelete_Click_Err
     If (QtyAdjustCheck.Value = True) Then
         If (CLng(NewQuantity) >= (rstCommit!Committed - rstCommit!QtyCommitted)) Then
             Utilities.OperationEntry rstCommit!ID, "Inventory", _
-                "Changed quantity from " & rstCommit!OnHand & " to " & NewQuantity
+                "Changed OnHand from " & rstCommit!OnHand & " to " & NewQuantity & _
+                    " after Commit " & CurrentCommitID & " Deletion"
         Else
             GoTo cmdDelete_QtyAdjust_Err
         End If
@@ -275,7 +277,8 @@ On Error GoTo cmdComplete_Click_Err
     If (QtyAdjustCheck.Value = True) Then
         If (CLng(NewQuantity) >= (rstCommit!Committed - rstCommit!QtyCommitted)) Then
             Utilities.OperationEntry rstCommit!ID, "Inventory", _
-                "Changed quantity from " & rstCommit!OnHand & " to " & NewQuantity
+                "Changed OnHand from " & (rstCommit!OnHand - rstCommit!QtyCommitted) & " to " & NewQuantity & _
+                    " after Commit " & CurrentCommitID & " Completion"
         Else
             GoTo cmdComplete_QtyAdjust_Err
         End If
