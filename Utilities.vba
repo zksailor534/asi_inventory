@@ -141,6 +141,7 @@ On Error GoTo ConfirmLogin_Err
     ' ------------------------------------------------------------------
     If (ValidLogin) Then
         Forms(MainForm)!lblCurrentEmployeeName.Caption = "Hello, " & EmployeeName
+        Forms(MainForm)!lblVersion.Caption = "Version " & ReleaseVersion
         Exit Function
     Else
         DoCmd.OpenForm LoginForm, acNormal, "", "", , acDialog
