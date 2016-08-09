@@ -3,8 +3,8 @@ Option Compare Database
 '------------------------------------------------------------
 ' American Surplus Inventory Database
 ' Author: Nathanael Greene
-' Current Revision: 2.1.2
-' Revision Date: 10/09/2015
+' Current Revision: 2.1.3
+' Revision Date: 10/16/2015
 '
 ' Revision History:
 '   2.0.0:  Initial Release replaces legacy database
@@ -38,13 +38,15 @@ Option Compare Database
 '               after full list
 '           Bug fix (CategoriesDS) - Field12 not being updated in form
 '           Bug fix (EmployeesDS) - Roles selector not working
+'   2.1.3:  Bug fix (Commit_Complete) - not allowed to complete
+'               when Committed > OnHand (+ Onorder added)
 '------------------------------------------------------------
 
 '------------------------------------------------------------
 ' Global constants
 '
 '------------------------------------------------------------
-Public Const ReleaseVersion As String = "2.1.2"
+Public Const ReleaseVersion As String = "2.1.3"
 ''' User Roles
 Public Const DevelLevel As String = "Devel"
 Public Const AdminLevel As String = "Admin"
@@ -869,10 +871,12 @@ Public Function Commit_Complete(ByRef rst As DAO.Recordset) As Boolean
     Do While Not rst.EOF
         If (rst!Status = "A") Then
             ' Check existing available quantity
-            If (rst!OnHand < 0) Or (rst!OnHand < rst!Committed) Then
+            If (rst!OnHand < 0) Or ((rst!OnHand + rst!OnOrder) < rst!Committed) Then
                 GoTo Quantity_Err
+            ' Check commit quantities are valid
             ElseIf (rst!Committed <= 0) Or (rst!QtyCommitted <= 0) Then
                 GoTo Quantity_Err
+            ' Check if current commit quantity is valid
             ElseIf ((rst!Committed - rst!QtyCommitted) < 0) Or ((rst!OnHand - rst!QtyCommitted) < 0) Then
                 GoTo Quantity_Err
             End If
