@@ -3,8 +3,8 @@ Option Compare Database
 '------------------------------------------------------------
 ' American Surplus Inventory Database
 ' Author: Nathanael Greene
-' Current Revision: 2.02
-' Revision Date: 09/22/2015
+' Current Revision: 2.03
+' Revision Date: 09/25/2015
 '
 ' Revision History:
 '   2.0:    Initial Release replaces legacy database
@@ -16,13 +16,17 @@ Option Compare Database
 '               Main, CategoriesEdit)
 '   2.02:   Bug fixes (ItemEdit, ItemNew) - invalid null in
 '               numeric inputs
+'   2.03:   Bug fixes (Commit_Cancel, ItemNew) - cancel had
+'               wrong sign (committing more)
+'               Added Record ID search to Inventory Manage
+'               Added scroll bar to ItemNew
 '------------------------------------------------------------
 
 '------------------------------------------------------------
 ' Global constants
 '
 '------------------------------------------------------------
-Public Const ReleaseVersion As String = "2.02"
+Public Const ReleaseVersion As String = "2.03"
 ''' User Roles
 Public Const DevelLevel As String = "Devel"
 Public Const AdminLevel As String = "Admin"
@@ -410,19 +414,19 @@ End Sub
 Public Function NewRecordID(strRecordPrefix As String, lowBound As Long) As String
 
     Dim rst As DAO.Recordset
-    Dim strSQL As String
+    Dim strSql As String
     Dim arrayDim As Boolean
     Dim ind As Integer
     Dim recordArray() As Long
     Dim sortedArray() As Long
 
-    strSQL = "SELECT [RecordID]" & _
+    strSql = "SELECT [RecordID]" & _
         " FROM " & ItemDB & _
         " WHERE [RecordID]" & _
         " LIKE '" & strRecordPrefix & "-*'" & _
         " ORDER BY [RecordID]"
     open_db
-    Set rst = db.OpenRecordset(strSQL, dbOpenSnapshot)
+    Set rst = db.OpenRecordset(strSql, dbOpenSnapshot)
 
     If rst.RecordCount > 1 Then
         With rst
