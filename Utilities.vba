@@ -47,6 +47,7 @@ Public Const SettingsDB As String = "Settings"
 Public Const WarehouseQuery As String = "qryItemWarehouse"
 Public Const CategoryQuery As String = "qryCategoryList"
 Public Const CommitQuery As String = "qryItemCommit"
+Public Const ProductQuery As String = "qrySubProducts"
 ''' Form Names
 Public Const MainForm As String = "Main"
 Public Const LoginForm As String = "Login"
@@ -61,6 +62,7 @@ Public Const PrintRangeForm As String = "PrintRange"
 Public Const CategoriesEditForm As String = "CategoriesEdit"
 Public Const GenerateRecordIDForm As String = "GenerateRecordID"
 Public Const OrderCommitManageForm As String = "OrderCommitManage"
+
 
 '------------------------------------------------------------
 ' Application properties
@@ -644,6 +646,24 @@ Public Function IsValidCategory(Category As String) As Boolean
     Exit Function
 ErrHandler:
     IsValidCategory = False
+    Exit Function
+End Function
+
+
+'------------------------------------------------------------
+' IsValidProduct
+' Check if given string is valid product
+'------------------------------------------------------------
+Public Function IsValidProduct(Product As String) As Boolean
+    On Error GoTo ErrHandler
+    If (Product = DLookup("ProductName", ProductDB, "[ProductName]='" & Product & "'")) Then
+        IsValidProduct = True
+    Else
+        IsValidProduct = False
+    End If
+    Exit Function
+ErrHandler:
+    IsValidProduct = False
     Exit Function
 End Function
 
