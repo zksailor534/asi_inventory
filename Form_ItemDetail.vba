@@ -41,17 +41,31 @@ Private Sub cmdCommit_Click()
     Dim qtyAvailable As Integer
     Dim rstCommitted As DAO.Recordset
 
-    ' Prompt for commit quantity
-    commitPrompt = InputBox("Quantity", "Quantity to Commit?", 1)
+    qtyAvailable = Me.OnHand + Me.OnOrder - Me.Committed
+    ' Check quantity available
+    If (qtyAvailable < 0) Then
+        MsgBox "Available Quantity must be greater than Zero" & vbCrLf & _
+            "Contact Administrator", , "Invalid Quantity Available"
+        GoTo cmdCommit_Click_Exit
+    End If
 
-    ' Verify response is numeric
-    If Not (IsNumeric(commitPrompt)) Then
+    ' Prompt for commit quantity
+    commitPrompt = InputBox("Quantity to Commit?" & vbCrLf & vbCrLf & _
+        "Record ID: " & RecordID & vbCrLf & _
+        "Product: " & Product & vbCrLf & _
+        "Quantity Available: " & qtyAvailable & vbCrLf, _
+        "Quantity", "")
+
+    If (commitPrompt = "") Then
+        ' Deal with cancel selection
+        GoTo cmdCommit_Click_Exit
+    ElseIf Not (IsNumeric(commitPrompt)) Then
+        ' Verify response is numeric
         MsgBox "Commit Quantity must be numeric", , "Invalid Commit Quantity"
         GoTo cmdCommit_Click_Exit
     End If
 
     commitQuantity = CInt(commitPrompt)
-    qtyAvailable = Me.OnHand + Me.OnOrder - Me.Committed
 
     ' Verify chosen quantity is available
     If (commitQuantity > qtyAvailable) Then
@@ -92,10 +106,10 @@ cmdCommit_getSO:
         .Update
     End With
 
-    ' Change the qty committed in the warehouse form
-    Committed = Committed + commitQuantity
-
-
+    ' Update the warehouse form
+    Me.Committed = Me.Committed + commitQuantity
+    Me.LastOper = EmployeeLogin
+    Me.LastDate = Now()
 
 cmdCommit_Click_Exit:
     Exit Sub
