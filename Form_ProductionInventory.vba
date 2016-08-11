@@ -90,9 +90,10 @@ Private Sub IDFilterButton_Click()
     Else
         If ValidRecordID(RecordIDFilter) Then
             ' Engage filter from RecordID selection
-            Me.sbfrmInvSearch.Form.Filter = "[Category]= '" & CategorySelected & "' AND [OnHand] > 0" & _
-                "' AND [RecordID] = '" & RecordIDFilter & "'"
+            Me.sbfrmInvSearch.Form.Filter = "[Category]='" & CategorySelected & "' AND [OnHand]>0" & _
+                " AND [RecordID] = '" & RecordIDFilter & "'"
             Me.sbfrmInvSearch.Form.FilterOn = True
+            Me.sbfrmInvSearch.Form.Requery
             CurrentItemID = GetRecordItemID(RecordIDFilter)
         Else
             RecordIDFilter = ""
@@ -166,7 +167,6 @@ Private Sub EditItemButton_Click()
         DoCmd.OpenForm ItemEditForm, acNormal, , , , acDialog
         Me.sbfrmInvSearch.Form.Requery
     Else
-        Debug.Print "CurrentItemID", CurrentItemID
         MsgBox "Please select record to edit"
         Exit Sub
     End If
