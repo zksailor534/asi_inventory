@@ -149,6 +149,32 @@ End Sub
 
 
 '------------------------------------------------------------
+' PrintButton_Click
+'
+'------------------------------------------------------------
+Private Sub PrintButton_Click()
+    On Error GoTo PrintButton_ErrHandler
+
+    PrintCategorySelected = searchCategory
+    PrintFilter = sbfrmInvSearch.Form.Filter
+
+    ' Open PrintRange form
+    DoCmd.OpenForm PrintRangeForm, acFormDS, , , , , acWindowNormal
+
+PrintButton_Exit:
+    PrintFilter = ""
+    PrintCategorySelected = ""
+    Exit Sub
+
+PrintButton_ErrHandler:
+    MsgBox "Error in SelRecsBtn_Click( ) in" & vbCrLf & Me.Name & " form." & vbCrLf & vbCrLf & "Error #" & Err.Number & vbCrLf & vbCrLf & Err.Description
+    Err.Clear
+    GoTo PrintButton_Exit
+
+End Sub
+
+
+'------------------------------------------------------------
 ' ViewItemButton_Click
 '
 '------------------------------------------------------------
