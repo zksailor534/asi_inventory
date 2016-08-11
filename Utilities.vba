@@ -3,10 +3,11 @@ Option Compare Database
 '------------------------------------------------------------
 ' American Surplus Inventory Database
 ' Author: Nathanael Greene
-' Current Revision: 2.3.1
+' Current Revision: 2.3.2
 ' Revision Date: 11/02/2015
 '
 ' Revision History:
+'   2.3.2:  Bug fix: Missing references from ASIdev
 '   2.3.1:  Bug fix (OrderCommitManage): need to use Query instead
 '               of individual tables (Item, Inv, Commit)
 '   2.3.0:  New: Updated ItemDetail with new design and Image field
@@ -62,7 +63,7 @@ Option Compare Database
 ' Global constants
 '
 '------------------------------------------------------------
-Public Const ReleaseVersion As String = "2.3.1"
+Public Const ReleaseVersion As String = "2.3.2"
 ''' User Roles
 Public Const DevelLevel As String = "Devel"
 Public Const AdminLevel As String = "Admin"

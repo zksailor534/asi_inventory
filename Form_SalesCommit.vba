@@ -107,7 +107,7 @@ Private Sub ManageCommitButton_Click()
         MsgBox "No commitment selected:" & vbCrLf & "Please select commitment to edit", , "Invalid Commit"
         Exit Sub
     Else
-        If EmployeeLogin <> SalesOrderUser(CurrentSalesOrder) Then
+        If (EmployeeRole = SalesLevel) And (EmployeeLogin <> SalesOrderUser(CurrentSalesOrder)) Then
             MsgBox "Invalid User:" & vbCrLf & "Unable to edit Commit of other user", , "Invalid User"
             Exit Sub
         End If
