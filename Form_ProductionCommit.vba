@@ -15,14 +15,14 @@ Private Sub Form_Open(Cancel As Integer)
     sbfrmOrderSearch.Form.DatasheetFontHeight = 10
     SetScreenSize
 
-    ' Default is only active commits
-    ActiveToggle.Value = True
-    Me.sbfrmOrderSearch.Form.Controls("Status").ColumnHidden = True
+    ' By default display all commits and status
+    StatusSelect = "All"
+    Me.sbfrmOrderSearch.Form.Status.ColumnHidden = False
 
     ' Engage filter from Committed status
     SalesOrderFiltered = ""
     CurrentSalesOrder = ""
-    Me.sbfrmOrderSearch.Form.Filter = GetFilter(EmployeeRole, SalesOrderFiltered)
+    Me.sbfrmOrderSearch.Form.Filter = GetFilter(EmployeeRole, SalesOrderFiltered, StatusSelect)
     Me.sbfrmOrderSearch.Form.OrderBy = "DateActive DESC"
     Me.sbfrmOrderSearch.Form.FilterOn = True
 
@@ -33,7 +33,6 @@ outNow:
     SalesOrderFiltered.SetFocus
 
 End Sub
-
 
 '------------------------------------------------------------
 ' SalesOrderFiltered_AfterUpdate
@@ -56,7 +55,7 @@ Private Sub OrderFilterButton_Click()
     Else
         If ValidSalesOrder(SalesOrderFiltered) Then
             ' Engage filter from sales order selection
-            Me.sbfrmOrderSearch.Form.Filter = GetFilter(EmployeeRole, SalesOrderFiltered)
+            Me.sbfrmOrderSearch.Form.Filter = GetFilter(EmployeeRole, SalesOrderFiltered, StatusSelect)
             Me.sbfrmOrderSearch.Form.OrderBy = "DateActive DESC"
             Me.sbfrmOrderSearch.Form.FilterOn = True
             CurrentSalesOrder = SalesOrderFiltered
@@ -75,7 +74,7 @@ End Sub
 Private Sub ClearFilterButton_Click()
     SalesOrderFiltered = ""
     CurrentSalesOrder = ""
-    Me.sbfrmOrderSearch.Form.Filter = GetFilter(EmployeeRole, SalesOrderFiltered)
+    Me.sbfrmOrderSearch.Form.Filter = GetFilter(EmployeeRole, SalesOrderFiltered, StatusSelect)
     Me.sbfrmOrderSearch.Form.OrderBy = "DateActive DESC"
     Me.sbfrmOrderSearch.Form.FilterOn = True
     Me.sbfrmOrderSearch.Form.Requery
@@ -83,19 +82,12 @@ End Sub
 
 
 '------------------------------------------------------------
-' ActiveToggle_Click
+' StatusSelect_AfterUpdate
 '
 '------------------------------------------------------------
-Private Sub ActiveToggle_Click()
-    Me.sbfrmOrderSearch.Form.Filter = GetFilter(EmployeeRole, SalesOrderFiltered)
+Private Sub StatusSelect_AfterUpdate()
+    Me.sbfrmOrderSearch.Form.Filter = GetFilter(EmployeeRole, SalesOrderFiltered, StatusSelect)
     Me.sbfrmOrderSearch.Form.FilterOn = True
-
-    If (ActiveToggle.Value = True) Then
-        Me.sbfrmOrderSearch.Form.Controls("Status").ColumnHidden = True
-    Else
-        Me.sbfrmOrderSearch.Form.Controls("Status").ColumnHidden = False
-    End If
-
     Me.sbfrmOrderSearch.Form.Requery
 End Sub
 
@@ -123,10 +115,10 @@ End Sub
 
 
 '------------------------------------------------------------
-' DeleteCommitButton_Click
+' CancelCommitButton_Click
 '
 '------------------------------------------------------------
-Private Sub DeleteCommitButton_Click()
+Private Sub CancelCommitButton_Click()
     Dim rstCommit As DAO.Recordset
     Dim decommitAll As Integer
 
@@ -138,7 +130,7 @@ Private Sub DeleteCommitButton_Click()
     End If
 
     If CurrentSalesOrder <> "" Then
-        decommitAll = MsgBox("Do you want to remove commitments for ALL items in Sales Order " & CurrentSalesOrder _
+        decommitAll = MsgBox("Do you want to Cancel commitments for ALL items in Sales Order " & CurrentSalesOrder _
             & "?", vbYesNo, "Decommit All Items")
 
         If decommitAll = vbNo Then
@@ -146,8 +138,12 @@ Private Sub DeleteCommitButton_Click()
         ElseIf decommitAll = vbYes Then
             open_db
             Set rstCommit = db.OpenRecordset("SELECT * FROM " & CommitQuery & _
-                " WHERE [Reference] = '" & CurrentSalesOrder & "' AND [Status] = 'A'")
+                " WHERE [Reference] = '" & CurrentSalesOrder & "' AND [Status] IN ('A')")
             Call Utilities.Commit_Cancel(rstCommit)
+
+            Utilities.OperationEntry rstCommit!ID, "Commit", _
+                "Cancelled All Commitments from Sales Order " & CurrentSalesOrder
+
             rstCommit.Close
             Set rstCommit = Nothing
             Me.sbfrmOrderSearch.Form.Requery
@@ -161,6 +157,45 @@ End Sub
 
 
 '------------------------------------------------------------
+' ReactivateCommitButton_Click
+'
+'------------------------------------------------------------
+Private Sub ReactivateCommitButton_Click()
+    Dim rstCommit As DAO.Recordset
+    Dim reactivateAll As Integer
+
+    If (EmployeeRole = SalesLevel) Then
+        MsgBox "Invalid User:" & vbCrLf & "Not allowed to Reactivate Commitment", , "Invalid User"
+        Exit Sub
+    End If
+
+    If CurrentSalesOrder <> "" Then
+        reactivateAll = MsgBox("Do you want to reactivate ALL commitments in Sales Order " & CurrentSalesOrder _
+            & "?", vbYesNo, "Reactivate All Items")
+
+        If reactivateAll = vbNo Then
+           Exit Sub
+        ElseIf reactivateAll = vbYes Then
+            open_db
+            Set rstCommit = db.OpenRecordset("SELECT * FROM " & CommitQuery & _
+                " WHERE [Reference] = '" & CurrentSalesOrder & "' AND [Status] IN ('C','X')")
+            Call Utilities.Commit_Reactivate(rstCommit)
+
+            Utilities.OperationEntry rstCommit!ID, "Commit", _
+                "Reactivated All Commitments from Sales Order " & CurrentSalesOrder
+
+            rstCommit.Close
+            Set rstCommit = Nothing
+            Me.sbfrmOrderSearch.Form.Requery
+        End If
+    Else
+        MsgBox "No Sales Order Selected", , "Invalid Sales Order"
+        Exit Sub
+    End If
+End Sub
+
+
+'------------------------------------------------------------
 ' CompleteCommitButton_Click
 '
 '------------------------------------------------------------
@@ -169,12 +204,12 @@ Private Sub CompleteCommitButton_Click()
     Dim completeAll As Integer
 
     If (EmployeeRole = SalesLevel) Then
-        MsgBox "Invalid User:" & vbCrLf & "Unable to complete Commit", , "Invalid User"
+        MsgBox "Invalid User:" & vbCrLf & "Unable to Complete Commit", , "Invalid User"
         Exit Sub
     End If
 
     If CurrentSalesOrder <> "" Then
-        completeAll = MsgBox("Do you want to complete commitments for ALL items in Sales Order " & CurrentSalesOrder _
+        completeAll = MsgBox("Do you want to Complete commitments for ALL items in Sales Order " & CurrentSalesOrder _
             & "?", vbYesNo, "Complete All Items")
 
         If completeAll = vbNo Then
@@ -184,6 +219,10 @@ Private Sub CompleteCommitButton_Click()
             Set rstCommit = db.OpenRecordset("SELECT * FROM " & CommitQuery & _
                 " WHERE [Reference] = '" & CurrentSalesOrder & "' AND [Status] = 'A'")
             Call Utilities.Commit_Complete(rstCommit)
+
+            Utilities.OperationEntry rstCommit!ID, "Commit", _
+                "Completed All Commitments from Sales Order " & CurrentSalesOrder
+
             rstCommit.Close
             Set rstCommit = Nothing
             Me.sbfrmOrderSearch.Form.Requery
@@ -252,32 +291,25 @@ End Function
 ' GetFilter
 '
 '------------------------------------------------------------
-Private Function GetFilter(Role As String, Order As String) As String
+Private Function GetFilter(Role As String, Order As String, Status As String) As String
     On Error Resume Next
-    ' Active, No Order
-    If (Role = SalesLevel) And (ActiveToggle.Value = True) And (Order = "") Then
-        GetFilter = "[Status]='A' AND [OperatorActive]='" & EmployeeLogin & "'"
-    ' Not Active, No Order
-    ElseIf (Role = SalesLevel) And (ActiveToggle.Value = False) And (Order = "") Then
-        GetFilter = "[OperatorActive]='" & EmployeeLogin & "'"
-    ' Active, Order
-    ElseIf (Role = SalesLevel) And (ActiveToggle.Value = True) And (Order <> "") Then
-        GetFilter = "[Status]='A' AND [OperatorActive]='" & EmployeeLogin & "' AND [Reference]= '" & Order & "'"
-    ' Not Active, Order
-    ElseIf (Role = SalesLevel) And (ActiveToggle.Value = False) And (Order <> "") Then
-        GetFilter = "[OperatorActive]='" & EmployeeLogin & "' AND [Reference]= '" & Order & "'"
-    ' Manager Roles, Active, No Order
-    ElseIf (Role <> SalesLevel) And (ActiveToggle.Value = True) And (Order = "") Then
+    ' Active
+    If (Status = "Active") Then
         GetFilter = "[Status]='A'"
-    ' Manager Roles, Not Active, No Order
-    ElseIf (Role <> SalesLevel) And (ActiveToggle.Value = False) And (Order = "") Then
-        GetFilter = ""
-    ' Manager Roles, Active, Order
-    ElseIf (Role <> SalesLevel) And (ActiveToggle.Value = True) And (Order <> "") Then
-        GetFilter = "[Status]='A' AND [Reference]= '" & Order & "'"
-    ' Manager Roles, Not Active, Order
-    ElseIf (Role <> SalesLevel) And (ActiveToggle.Value = False) And (Order <> "") Then
-        GetFilter = "[Reference]= '" & Order & "'"
+    ' Complete
+    ElseIf (Status = "Complete") Then
+        GetFilter = "[Status]='C'"
+    ' Cancelled
+    ElseIf (Status = "Cancelled") Then
+        GetFilter = "[Status]='X'"
+    ' All
+    ElseIf (Status = "All") Then
+        GetFilter = "[Status] LIKE '*'"
+    End If
+
+    ' Order Filter
+    If (Order <> "") Then
+        GetFilter = GetFilter & " AND [Reference]= '" & Order & "'"
     End If
 End Function
 
@@ -291,19 +323,25 @@ Private Sub UserRoleProperties(Role As String)
 
     If (Role = SalesLevel) Then
         ' Hide Complete Commit button for salespeople
-        DeleteCommitButton.Visible = True
-        DeleteCommitButton.Enabled = True
+        CancelCommitButton.Visible = True
+        CancelCommitButton.Enabled = True
+        ReactivateCommitButton.Visible = False
+        ReactivateCommitButton.Enabled = False
         CompleteCommitButton.Visible = False
         CompleteCommitButton.Enabled = False
     ElseIf (Role = ProdLevel) Then
-        ' Hide Delete Commit button for production
-        DeleteCommitButton.Visible = False
-        DeleteCommitButton.Enabled = False
-        CompleteCommitButton.Visible = True
-        CompleteCommitButton.Enabled = True
+        ' Hide Complete Commit button for production
+        CancelCommitButton.Visible = True
+        CancelCommitButton.Enabled = True
+        ReactivateCommitButton.Visible = True
+        ReactivateCommitButton.Enabled = True
+        CompleteCommitButton.Visible = False
+        CompleteCommitButton.Enabled = False
     Else
-        DeleteCommitButton.Visible = True
-        DeleteCommitButton.Enabled = True
+        CancelCommitButton.Visible = True
+        CancelCommitButton.Enabled = True
+        ReactivateCommitButton.Visible = True
+        ReactivateCommitButton.Enabled = True
         CompleteCommitButton.Visible = True
         CompleteCommitButton.Enabled = True
     End If

@@ -104,8 +104,6 @@ Private Sub UserRoleSettings()
         nvbAdmin.Visible = False
         nvbAdmin.Enabled = False
     ElseIf (EmployeeRole = AdminLevel) Then
-        Me.nvbProduction.SetFocus
-        SendKeys "{ENTER}", 0
         nvbSales.Enabled = True
         nvbProduction.Enabled = True
         nvbAdmin.Visible = True

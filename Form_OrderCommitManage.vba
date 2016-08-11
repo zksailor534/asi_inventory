@@ -26,28 +26,33 @@ On Error GoTo Form_Load_Err
         GoTo Form_Load_Exit
     End If
 
-    SetVisibility
-
     ' Open recordsets
     open_db
     Set rstCommit = db.OpenRecordset("SELECT * FROM " & CommitQuery & " WHERE [CommitID] = " & CurrentCommitID)
 
     ' Check for valid commit status
-    If (rstCommit!Status <> "A") And (rstCommit!Status <> "X") And (rstCommit!Status <> "C") Then
-        MsgBox "Commit status is invalid:" & vbCrLf & "Commit Status must be 'A', 'X', or 'C'" _
+    If (rstCommit!Status <> "A") And (rstCommit!Status <> "X") And (rstCommit!Status <> "P") And (rstCommit!Status <> "C") Then
+        MsgBox "Commit status is invalid:" & vbCrLf & "Commit Status must be 'A', 'X', 'P', or 'C'" _
             , vbOKOnly, "Invalid Commit Status"
         DoCmd.Close
         GoTo Form_Load_Exit
     End If
 
+    ' By default, location adjust check is false (not checked)
+    LocAdjustCheck.Value = False
+    Location.Enabled = False
+    Location.Locked = True
+    Utilities.FieldAvailableRemove Me.Controls("Location")
+
     ' By default, quantity adjust check is false (not checked)
     QtyAdjustCheck.Value = False
-    NewQuantity.Enabled = False
-    NewQuantity.Locked = True
-    Utilities.FieldAvailableRemove Me.Controls("NewQuantity")
+    OnHand.Enabled = False
+    OnHand.Locked = True
+    Utilities.FieldAvailableRemove Me.Controls("OnHand")
 
+    ' Populate fields
     FillFields
-
+    SetVisibility
     SetTitleStatus
 
 Form_Load_Exit:
@@ -84,7 +89,7 @@ On Error GoTo cmdSave_Click_Err
     On Error GoTo 0
 
     ' Check if anything has changed
-    If (CLng(QtyCommitted) = rstCommit!QtyCommitted _
+    If (QtyCommitted = rstCommit!QtyCommitted _
         And SalesOrder = rstCommit!Reference) Then
         GoTo cmdSave_NoChange_Err
     End If
@@ -103,27 +108,23 @@ On Error GoTo cmdSave_Click_Err
 
     ' Check for valid Commit Quantity
     ' Must be numeric, positive, and less than or equal to available
-    If Not (IsNumeric(QtyCommitted = "")) Then
+    If Not (IsNumeric(QtyCommitted)) Then
         GoTo cmdSave_QtyCommitted_Err
     ElseIf CLng(QtyCommitted) <= 0 Then
         GoTo cmdSave_QtyCommitted_Err
     ElseIf CLng(QtyCommitted) > (rstCommit!OnHand + rstCommit!OnOrder - _
-        rstCommit!Committed + rstCommit!QtyCommitted - CLng(QtyCommitted)) Then
+        rstCommit!Committed + rstCommit!QtyCommitted) Then
         GoTo cmdSave_QtyCommitted_Err
     ElseIf (QtyAdjustCheck.Value = True) Then
-        If CLng(QtyCommitted) > (NewQuantity + rstCommit!OnOrder - _
+        If CLng(QtyCommitted) > (CLng(OnHand) + rstCommit!OnOrder - _
             rstCommit!Committed + rstCommit!QtyCommitted - CLng(QtyCommitted)) Then
             GoTo cmdSave_QtyCommitted_Err
         End If
     End If
 
-    ' Adjust quantity if called for
+    ' Check for valid adjust quantity if called for
     If (QtyAdjustCheck.Value = True) Then
-        If (CLng(NewQuantity) >= (Committed - rstCommit!QtyCommitted + QtyCommitted)) Then
-            Utilities.OperationEntry rstCommit!ID, "Inventory", _
-                "Changed OnHand from " & rstCommit!OnHand & " to " & NewQuantity & _
-                    " in Commit " & CurrentCommitID
-        Else
+        If ((CLng(OnHand) + rstCommit!OnOrder) < (Committed - rstCommit!QtyCommitted + QtyCommitted)) Then
             GoTo cmdSave_QtyAdjust_Err
         End If
     End If
@@ -136,18 +137,34 @@ On Error GoTo cmdSave_Click_Err
         !Reference = SalesOrder
         !Committed = Committed - !QtyCommitted + QtyCommitted
         !QtyCommitted = QtyCommitted
-        If (NewQuantity <> OnHand) Then
-            !OnHand = NewQuantity
+
+        ' Adjust Location if different
+        If (Location <> !Location) Then
+            Utilities.OperationEntry rstCommit!ID, "Inventory", _
+                "Changed Location from " & rstCommit!Location & " to " & Location & _
+                    " in Commit " & CurrentCommitID, "Move"
+            !Location = Location
             !LastOper = EmployeeLogin
             !LastDate = Now()
         End If
+
+        ' Adjust Quantity if different
+        If (OnHand <> !OnHand) Then
+            Utilities.OperationEntry rstCommit!ID, "Inventory", _
+                "Changed OnHand from " & rstCommit!OnHand & " to " & OnHand & _
+                    " in Commit " & CurrentCommitID, "Count"
+            !OnHand = OnHand
+            !LastOper = EmployeeLogin
+            !LastDate = Now()
+        End If
+
         .Update
     End With
 
     GoTo cmdSave_Success
 
 cmdSave_Click_Exit:
-    DoCmd.Close
+    FillFields
     Exit Sub
 
 cmdSave_Click_Err:
@@ -184,75 +201,129 @@ End Sub
 
 
 '------------------------------------------------------------
-' cmdDelete_Click
+' cmdCancel_Click
 '
 '------------------------------------------------------------
-Private Sub cmdDelete_Click()
-On Error GoTo cmdDelete_Click_Err
+Private Sub cmdCancel_Click()
+On Error GoTo cmdCancel_Click_Err
 
     Dim success As Boolean
 
     ' Check for valid user
     If (EmployeeLogin = "") Then
-        GoTo cmdDelete_User_Err
+        GoTo cmdCancel_User_Err
     ElseIf (EmployeeRole = SalesLevel) And (rstCommit!OperatorActive <> EmployeeLogin) Then
-        GoTo cmdDelete_User_Err
+        GoTo cmdCancel_User_Err
     End If
 
-    ' Check if on hand quantity adjustment is valid
-    If (QtyAdjustCheck.Value = True) Then
-        If (CLng(NewQuantity) >= (rstCommit!Committed - rstCommit!QtyCommitted)) Then
-            Utilities.OperationEntry rstCommit!ID, "Inventory", _
-                "Changed OnHand from " & rstCommit!OnHand & " to " & NewQuantity & _
-                    " after Commit " & CurrentCommitID & " Deletion"
-        Else
-            GoTo cmdDelete_QtyAdjust_Err
-        End If
-    End If
-
-    ' Delete commit
+    ' Cancel commit
     success = Utilities.Commit_Cancel(rstCommit)
     If Not (success) Then
-        GoTo cmdDelete_Delete_Err
+        GoTo cmdCancel_Err
+    Else
+        Utilities.OperationEntry rstCommit!ID, "Commit", _
+            "Cancelled Commitment " & CurrentCommitID & " from Sales Order " & CurrentSalesOrder
     End If
 
     ' Adjust quantity if called for
-    If (QtyAdjustCheck.Value = True) Then
+    If (QtyAdjustCheck.Value = True) Or (LocAdjustCheck.Value = True) Then
         With rstCommit
             .Edit
-            !OnHand = NewQuantity
-            !LastOper = EmployeeLogin
-            !LastDate = Now()
+
+            ' Adjust Location if different
+            If (Location <> !Location) Then
+                Utilities.OperationEntry rstCommit!ID, "Inventory", _
+                    "Changed Location from " & rstCommit!Location & " to " & Location & _
+                    " after Commit " & CurrentCommitID & " Cancellation", "Move"
+                !Location = Location
+                !LastOper = EmployeeLogin
+                !LastDate = Now()
+            End If
+
+            ' Adjust Quantity if different
+            If (OnHand <> !OnHand) Then
+                Utilities.OperationEntry rstCommit!ID, "Inventory", _
+                    "Changed OnHand from " & rstCommit!OnHand & " to " & OnHand & _
+                    " after Commit " & CurrentCommitID & " Cancellation", "Count"
+                !OnHand = OnHand
+                !LastOper = EmployeeLogin
+                !LastDate = Now()
+            End If
+
             .Update
         End With
     End If
 
-    GoTo cmdDelete_Success
+    GoTo cmdCancel_Success
 
-cmdDelete_Click_Exit:
+cmdCancel_Click_Exit:
     DoCmd.Close
     Exit Sub
 
-cmdDelete_Click_Err:
+cmdCancel_Click_Err:
     MsgBox "Error: (" & Err.Number & ") " & Err.Description, vbCritical
-    Resume cmdDelete_Click_Exit
+    Resume cmdCancel_Click_Exit
 
-cmdDelete_Success:
-    MsgBox "Successful Removal:" & vbCrLf & _
+cmdCancel_Success:
+    MsgBox "Successful Cancellation:" & vbCrLf & _
         "Commit " & CurrentCommitID & " for Sales Order " & SalesOrder, vbOKOnly, "Success"
-    GoTo cmdDelete_Click_Exit
+    GoTo cmdCancel_Click_Exit
 
-cmdDelete_User_Err:
-    MsgBox "Error: User is invalid" & vbCrLf & "Login as valid user", vbOKOnly, "Unable to Delete"
+cmdCancel_User_Err:
+    MsgBox "Error: User is invalid" & vbCrLf & "Login as valid user", vbOKOnly, "Unable to Cancel"
     Exit Sub
 
-cmdDelete_QtyAdjust_Err:
-    MsgBox "Error: Unable is Adjust Quantity" & vbCrLf & "New quantity must be greater than Committed Quantity" _
-        , vbOKOnly, "Unable to Adjust Quantity"
+cmdCancel_Err:
+    MsgBox "Error: Unable to Cancel Commitment", vbOKOnly, "Unable to Cancel"
     Exit Sub
 
-cmdDelete_Delete_Err:
-    MsgBox "Error: Unable to Delete", vbOKOnly, "Unable to Delete"
+End Sub
+
+
+'------------------------------------------------------------
+' cmdActive_Click
+'
+'------------------------------------------------------------
+Private Sub cmdActive_Click()
+On Error GoTo cmdActive_Click_Err
+
+    Dim success As Boolean
+
+    ' Check for valid user
+    If (EmployeeLogin = "") Or (EmployeeRole = SalesLevel) Then
+        GoTo cmdActive_User_Err
+    End If
+
+    ' Reactivate committed item
+    success = Utilities.Commit_Reactivate(rstCommit)
+    If Not (success) Then
+        GoTo cmdActive_Err
+    Else
+        Utilities.OperationEntry rstCommit!ID, "Commit", _
+            "Reactivated Commitment " & CurrentCommitID & " from Sales Order " & CurrentSalesOrder
+    End If
+
+    GoTo cmdActive_Success
+
+cmdActive_Click_Exit:
+    DoCmd.Close
+    Exit Sub
+
+cmdActive_Click_Err:
+    MsgBox "Error: (" & Err.Number & ") " & Err.Description, vbCritical
+    Resume cmdActive_Click_Exit
+
+cmdActive_Success:
+    MsgBox "Successfully Reactivated Item Commitment:" & vbCrLf & _
+        "Commit " & CurrentCommitID & " for Sales Order " & SalesOrder, vbOKOnly, "Success"
+    GoTo cmdActive_Click_Exit
+
+cmdActive_User_Err:
+    MsgBox "Error: User is invalid" & vbCrLf & "Login as valid user", vbOKOnly, "Unable to Save"
+    Exit Sub
+
+cmdActive_Err:
+    MsgBox "Error: Unable to Reactivate Commitment", vbOKOnly, "Unable to Reactivate"
     Exit Sub
 
 End Sub
@@ -274,11 +345,7 @@ On Error GoTo cmdComplete_Click_Err
 
     ' Check if on hand quantity adjustment is valid
     If (QtyAdjustCheck.Value = True) Then
-        If (CLng(NewQuantity) >= (rstCommit!Committed - rstCommit!QtyCommitted)) Then
-            Utilities.OperationEntry rstCommit!ID, "Inventory", _
-                "Changed OnHand from " & (rstCommit!OnHand - rstCommit!QtyCommitted) & " to " & NewQuantity & _
-                    " after Commit " & CurrentCommitID & " Completion"
-        Else
+        If ((CLng(OnHand) + rstCommit!OnOrder) < (rstCommit!Committed - rstCommit!QtyCommitted)) Then
             GoTo cmdComplete_QtyAdjust_Err
         End If
     End If
@@ -287,15 +354,36 @@ On Error GoTo cmdComplete_Click_Err
     success = Utilities.Commit_Complete(rstCommit)
     If Not (success) Then
         GoTo cmdComplete_Complete_Err
+    Else
+        Utilities.OperationEntry rstCommit!ID, "Commit", _
+            "Completed Commitment " & CurrentCommitID & " from Sales Order " & CurrentSalesOrder
     End If
 
     ' Adjust quantity if called for
     If (QtyAdjustCheck.Value = True) Then
         With rstCommit
             .Edit
-            !OnHand = NewQuantity
-            !LastOper = EmployeeLogin
-            !LastDate = Now()
+
+            ' Adjust Location if different
+            If (Location <> !Location) Then
+                Utilities.OperationEntry rstCommit!ID, "Inventory", _
+                    "Changed Location from " & rstCommit!Location & " to " & Location & _
+                    " after Commit " & CurrentCommitID & " Completion", "Move"
+                !Location = Location
+                !LastOper = EmployeeLogin
+                !LastDate = Now()
+            End If
+
+            ' Adjust Quantity if different
+            If (OnHand <> !OnHand) Then
+                Utilities.OperationEntry rstCommit!ID, "Inventory", _
+                    "Changed OnHand from " & rstCommit!OnHand & " to " & OnHand & _
+                    " after Commit " & CurrentCommitID & " Completion", "Count"
+                !OnHand = OnHand
+                !LastOper = EmployeeLogin
+                !LastDate = Now()
+            End If
+
             .Update
         End With
     End If
@@ -345,7 +433,25 @@ End Sub
 '
 '------------------------------------------------------------
 Private Sub Image_DblClick(Cancel As Integer)
-    Utilities.SendMessage True, , , rstCommit!ImagePath
+    If Utilities.FileExists(ImagePath) Then
+        Utilities.SendMessage True, , , ImagePath
+    End If
+End Sub
+
+'------------------------------------------------------------
+' LocAdjustCheck_Click
+'
+'------------------------------------------------------------
+Private Sub LocAdjustCheck_Click()
+    If (LocAdjustCheck.Value = True) Then
+        Location.Enabled = True
+        Location.Locked = False
+        Utilities.FieldAvailableSet Me.Controls("Location")
+    Else
+        Location.Enabled = False
+        Location.Locked = True
+        Utilities.FieldAvailableRemove Me.Controls("Location")
+    End If
 End Sub
 
 '------------------------------------------------------------
@@ -354,13 +460,13 @@ End Sub
 '------------------------------------------------------------
 Private Sub QtyAdjustCheck_Click()
     If (QtyAdjustCheck.Value = True) Then
-        NewQuantity.Enabled = True
-        NewQuantity.Locked = False
-        Utilities.FieldAvailableSet Me.Controls("NewQuantity")
+        OnHand.Enabled = True
+        OnHand.Locked = False
+        Utilities.FieldAvailableSet Me.Controls("OnHand")
     Else
-        NewQuantity.Enabled = False
-        NewQuantity.Locked = True
-        Utilities.FieldAvailableRemove Me.Controls("NewQuantity")
+        OnHand.Enabled = False
+        OnHand.Locked = True
+        Utilities.FieldAvailableRemove Me.Controls("OnHand")
     End If
 End Sub
 
@@ -390,11 +496,12 @@ Private Sub FillFields()
     ItemWidth = Nz(rstCommit!ItemWidth, "")
     ItemHeight = Nz(rstCommit!ItemHeight, "")
     ItemDepth = Nz(rstCommit!ItemDepth, "")
-    Image.Picture = Nz(rstCommit!ImagePath, "")
+
+    DisplayImage Nz(rstCommit!ImagePath, "")
+
     Location = Nz(rstCommit!Location, "")
     OnHand = Nz(rstCommit!OnHand, "")
     Committed = Nz(rstCommit!Committed, "")
-    NewQuantity = Nz(rstCommit!OnHand, "")
 
     ' Fill in Last Change Date and user based on status
     If (Status = "A") Then
@@ -403,9 +510,6 @@ Private Sub FillFields()
     ElseIf (Status = "X") Then
         LastUser = Nz(rstCommit!OperatorCancel, "")
         LastDate = Nz(rstCommit!DateCancel, "")
-    ElseIf (Status = "P") Then
-        LastUser = Nz(rstCommit!OperatorPicked, "")
-        LastDate = Nz(rstCommit!DatePicked, "")
     ElseIf (Status = "C") Then
         LastUser = Nz(rstCommit!OperatorComplete, "")
         LastDate = Nz(rstCommit!DateComplete, "")
@@ -423,8 +527,6 @@ Private Sub SetTitleStatus()
         Me.lblStatusTitle.Caption = "Active"
     ElseIf Me.Status = "X" Then
         Me.lblStatusTitle.Caption = "Cancelled"
-    ElseIf Me.Status = "P" Then
-        Me.lblStatusTitle.Caption = "Picked"
     ElseIf Me.Status = "C" Then
         Me.lblStatusTitle.Caption = "Completed"
     Else
@@ -438,49 +540,94 @@ End Sub
 '
 '------------------------------------------------------------
 Private Sub SetVisibility()
-    ' Employee Role settings
-    If (EmployeeRole = SalesLevel) Then
+
+    ' Can only reactivate Change Completed or Cancelled Orders
+    If (Status = "C" Or Status = "X") Then
+        lblLocAdjust.Visible = False
+        LocAdjustCheck.Visible = False
+        LocAdjustCheck.Enabled = False
+        lblQtyAdjust.Visible = False
+        QtyAdjustCheck.Visible = False
+        QtyAdjustCheck.Enabled = False
+        cmdSave.Enabled = False
+        cmdSave.Visible = False
         cmdComplete.Enabled = False
         cmdComplete.Visible = False
-        cmdDelete.Enabled = True
-        cmdDelete.Visible = True
-        lblQtyAdjust.Visible = False
-        QtyAdjustCheck.Visible = False
-        QtyAdjustCheck.Enabled = False
-        lblNewQuantity.Visible = False
-        NewQuantity.Visible = False
-        NewQuantity.Enabled = False
-    ElseIf (EmployeeRole = ProdLevel) Then
-        cmdComplete.Enabled = True
-        cmdComplete.Visible = True
-        cmdDelete.Enabled = True
-        cmdDelete.Visible = True
-        lblQtyAdjust.Visible = True
-        QtyAdjustCheck.Visible = True
-        QtyAdjustCheck.Enabled = True
-        lblNewQuantity.Visible = True
-        NewQuantity.Visible = True
-        NewQuantity.Enabled = False
-    Else
-        cmdComplete.Enabled = True
-        cmdComplete.Visible = True
-        cmdDelete.Enabled = True
-        cmdDelete.Visible = True
-        lblQtyAdjust.Visible = True
-        QtyAdjustCheck.Visible = True
-        QtyAdjustCheck.Enabled = True
-        lblNewQuantity.Visible = True
-        NewQuantity.Visible = True
-        NewQuantity.Enabled = False
-    End If
 
-    ' Order status settings
-    If Me.Status <> "A" Then
-        lblQtyAdjust.Visible = False
-        QtyAdjustCheck.Visible = False
-        QtyAdjustCheck.Enabled = False
-        lblNewQuantity.Visible = False
-        NewQuantity.Visible = False
-        NewQuantity.Enabled = False
+        If (EmployeeRole = SalesLevel) Then
+            cmdActive.Enabled = False
+            cmdActive.Visible = False
+        Else
+            cmdActive.Enabled = True
+            cmdActive.Visible = True
+        End If
+
+        cmdCancel.Enabled = False
+        cmdCancel.Visible = False
+    Else
+        If (EmployeeRole = SalesLevel) Then
+        ' Employee Sales Role settings
+            cmdComplete.Enabled = False
+            cmdComplete.Visible = False
+            cmdActive.Enabled = False
+            cmdActive.Visible = False
+            cmdCancel.Enabled = True
+            cmdCancel.Visible = True
+            lblLocAdjust.Visible = False
+            LocAdjustCheck.Visible = False
+            LocAdjustCheck.Enabled = False
+            lblQtyAdjust.Visible = False
+            QtyAdjustCheck.Visible = False
+            QtyAdjustCheck.Enabled = False
+        ElseIf (EmployeeRole = ProdLevel) Then
+        ' Employee Production Role settings
+            cmdComplete.Enabled = False
+            cmdComplete.Visible = False
+            cmdActive.Enabled = False
+            cmdActive.Visible = False
+            cmdCancel.Enabled = True
+            cmdCancel.Visible = True
+            lblLocAdjust.Visible = True
+            LocAdjustCheck.Visible = True
+            LocAdjustCheck.Enabled = True
+            lblQtyAdjust.Visible = True
+            QtyAdjustCheck.Visible = True
+            QtyAdjustCheck.Enabled = True
+        Else
+        ' Employee Manager Role settings
+            cmdComplete.Enabled = True
+            cmdComplete.Visible = True
+            cmdActive.Enabled = False
+            cmdActive.Visible = False
+            cmdCancel.Enabled = True
+            cmdCancel.Visible = True
+            lblLocAdjust.Visible = True
+            LocAdjustCheck.Visible = True
+            LocAdjustCheck.Enabled = True
+            lblQtyAdjust.Visible = True
+            QtyAdjustCheck.Visible = True
+            QtyAdjustCheck.Enabled = True
+        End If
+    End If
+End Sub
+
+
+'------------------------------------------------------------
+' DisplayImage
+'
+'------------------------------------------------------------
+Private Sub DisplayImage(path As String)
+    Dim fileExtension As String
+
+    fileExtension = LCase(Right$(path, Len(path) - InStrRev(path, ".")))
+
+    If Utilities.FileExists(path) And _
+        ((fileExtension = "gif") Or (fileExtension = "png") Or _
+        (fileExtension = "jpg")) Then
+        Image.Picture = path
+        ImagePath = path
+    Else
+        ImagePath = ""
+        Image.Picture = ""
     End If
 End Sub

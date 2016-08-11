@@ -100,13 +100,10 @@ End Sub
 '------------------------------------------------------------
 Private Sub cmdBrowse_Click()
     Dim strChoice As String
+
     strChoice = FileSelection
-    If Len(strChoice) > 0 Then
-        ImagePath = strChoice
-        DisplayImage (ImagePath)
-    Else
-        ImagePath = ""
-    End If
+
+    DisplayImage (strChoice)
 End Sub
 
 
@@ -165,9 +162,8 @@ Private Sub updateReservedRecordIDs()
 
     CategoryID = Utilities.GetCategoryID(Category)
     If (CategoryID <> 0) Then
-        sqlQuery = "SELECT [RecordID],[VENDOR] FROM " & ItemDB & _
-            " WHERE Category = '" & Category & "' AND [Vendor] = 'RESERVED'" & _
-            " AND CreateOper = '" & EmployeeLogin & "'"
+        sqlQuery = "SELECT [RecordID],[VENDOR],[CreateOper] FROM " & ItemDB & _
+            " WHERE Category = '" & Category & "' AND [Vendor] = 'RESERVED'"
         RecordID.RowSource = sqlQuery
     End If
 End Sub
@@ -260,6 +256,7 @@ End Sub
 '------------------------------------------------------------
 Private Sub cmdNewRecordID_Click()
     If (Prefix <> "") Then
+        Prefix = UCase(Prefix)
         RecordID = Utilities.NewRecordID(Prefix, 1)
     Else
         MsgBox "No Record ID Prefix Provided.", vbOKOnly
@@ -649,5 +646,17 @@ End Function
 '
 '------------------------------------------------------------
 Private Sub DisplayImage(path As String)
-    Image.Picture = path
+    Dim fileExtension As String
+
+    fileExtension = LCase(Right$(path, Len(path) - InStrRev(path, ".")))
+
+    If Utilities.FileExists(path) And _
+        ((fileExtension = "gif") Or (fileExtension = "png") Or _
+        (fileExtension = "jpg")) Then
+        Image.Picture = path
+        ImagePath = path
+    Else
+        ImagePath = ""
+        Image.Picture = ""
+    End If
 End Sub
