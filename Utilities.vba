@@ -201,7 +201,7 @@ On Error GoTo CompleteLogin_Err
     DoCmd.OpenForm MainForm
     Forms(MainForm)!lblCurrentEmployeeName.Caption = "Hello, " & EmployeeName
     Forms(MainForm)!lblVersion.Caption = "Version " & ReleaseVersion
-    Forms(MainForm)!nvbInventory.SetFocus
+    SetEmployeeVersion (EmployeeID)
     Err.Clear
 
 CompleteLogin_Exit:
@@ -276,6 +276,28 @@ End Function
 '------------------------------------------------------------
 Private Function GetEmployeeDefaultCategory(ID As Long)
     GetEmployeeDefaultCategory = DLookup("DefaultCategory", EmployeeDB, "[ID]=" & ID)
+End Function
+
+
+'------------------------------------------------------------
+' SetEmployeeVersion
+'
+'------------------------------------------------------------
+Private Function SetEmployeeVersion(ID As Long)
+    Dim rst As DAO.Recordset
+
+    open_db
+    Set rst = db.OpenRecordset("SELECT * FROM " & EmployeeDB & " WHERE [ID]=" & ID)
+
+    ' Set version in Employee DB
+    rst.Edit
+    rst!Version = ReleaseVersion
+    rst.Update
+
+    ' Clean up
+    rst.Close
+    Set rst = Nothing
+
 End Function
 
 
