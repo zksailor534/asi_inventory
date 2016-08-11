@@ -304,11 +304,9 @@ Private Function ValidateFields() As Boolean
 
     ' Check for valid Quantity
     If (Quantity = "") Or IsNull(Quantity) Then
-        Debug.Print 1
         Utilities.FieldErrorSet Me.Controls("Quantity")
         ValidateFields = False
     ElseIf Not (IsNumeric(Quantity)) Or CLng(Quantity) <= 0 Then
-        Debug.Print 2
         Utilities.FieldErrorSet Me.Controls("Quantity")
         ValidateFields = False
     Else
