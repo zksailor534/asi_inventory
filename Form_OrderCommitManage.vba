@@ -83,10 +83,7 @@ End Sub
 Private Sub cmdSave_Click()
 On Error GoTo cmdSave_Click_Err
 
-    ' -------------------------------------------------------------------
-    ' Error Handling
-    ' -------------------------------------------------------------------
-    On Error GoTo 0
+    Dim saveCheck As Integer
 
     ' Check if anything has changed
     If (QtyCommitted = rstCommit!QtyCommitted _
@@ -99,6 +96,13 @@ On Error GoTo cmdSave_Click_Err
         GoTo cmdSave_User_Err
     ElseIf ((EmployeeRole = SalesLevel) And (EmployeeLogin <> CommitUser)) Then
         GoTo cmdSave_User_Err
+    End If
+
+    ' Validate user command
+    saveCheck = MsgBox("Do you want to Save changes to commitment " & CurrentCommitID & " in Sales Order " & CurrentSalesOrder _
+        & "?", vbYesNo, "Save Commit")
+    If saveCheck = vbNo Then
+       Exit Sub
     End If
 
     ' Check for valid Sales Order
@@ -208,12 +212,20 @@ Private Sub cmdCancel_Click()
 On Error GoTo cmdCancel_Click_Err
 
     Dim success As Boolean
+    Dim cancelCheck As Integer
 
     ' Check for valid user
     If (EmployeeLogin = "") Then
         GoTo cmdCancel_User_Err
     ElseIf (EmployeeRole = SalesLevel) And (rstCommit!OperatorActive <> EmployeeLogin) Then
         GoTo cmdCancel_User_Err
+    End If
+
+    ' Validate user command
+    cancelCheck = MsgBox("Do you want to Cancel commitment " & CurrentCommitID & " in Sales Order " & CurrentSalesOrder _
+        & "?", vbYesNo, "Cancel Commit")
+    If cancelCheck = vbNo Then
+       Exit Sub
     End If
 
     ' Cancel commit
@@ -288,10 +300,18 @@ Private Sub cmdActive_Click()
 On Error GoTo cmdActive_Click_Err
 
     Dim success As Boolean
+    Dim activeCheck As Integer
 
     ' Check for valid user
     If (EmployeeLogin = "") Or (EmployeeRole = SalesLevel) Then
         GoTo cmdActive_User_Err
+    End If
+
+    ' Validate user command
+    activeCheck = MsgBox("Do you want to Reactivate commitment " & CurrentCommitID & " in Sales Order " & CurrentSalesOrder _
+        & "?", vbYesNo, "Reactivate Commit")
+    If activeCheck = vbNo Then
+       Exit Sub
     End If
 
     ' Reactivate committed item
@@ -337,10 +357,18 @@ Private Sub cmdComplete_Click()
 On Error GoTo cmdComplete_Click_Err
 
     Dim success As Boolean
+    Dim completeCheck As Integer
 
     ' Check for valid user
     If (EmployeeLogin = "") Or (EmployeeRole = SalesLevel) Then
         GoTo cmdComplete_User_Err
+    End If
+
+    ' Validate user command
+    completeCheck = MsgBox("Do you want to Complete commitment " & CurrentCommitID & " in Sales Order " & CurrentSalesOrder _
+        & "?", vbYesNo, "Complete Commit")
+    If completeCheck = vbNo Then
+       Exit Sub
     End If
 
     ' Check if on hand quantity adjustment is valid
@@ -564,7 +592,8 @@ Private Sub SetVisibility()
 
         cmdCancel.Enabled = False
         cmdCancel.Visible = False
-    Else
+    ' Active Orders
+    ElseIf (Status = "A") Then
         If (EmployeeRole = SalesLevel) Then
         ' Employee Sales Role settings
             cmdComplete.Enabled = False
@@ -581,8 +610,8 @@ Private Sub SetVisibility()
             QtyAdjustCheck.Enabled = False
         ElseIf (EmployeeRole = ProdLevel) Then
         ' Employee Production Role settings
-            cmdComplete.Enabled = False
-            cmdComplete.Visible = False
+            cmdComplete.Enabled = True
+            cmdComplete.Visible = True
             cmdActive.Enabled = False
             cmdActive.Visible = False
             cmdCancel.Enabled = True
