@@ -3,8 +3,8 @@ Option Compare Database
 '------------------------------------------------------------
 ' American Surplus Inventory Database
 ' Author: Nathanael Greene
-' Current Revision: 2.2.1
-' Revision Date: 10/19/2015
+' Current Revision: 2.2.3
+' Revision Date: 10/21/2015
 '
 ' Revision History:
 '   2.0.0:  Initial Release replaces legacy database
@@ -47,13 +47,16 @@ Option Compare Database
 '   2.2.1:  Bug fix - re-link to database backend
 '   2.2.2:  Bug fix (ProductionInventory) - Fix RecordID Filter
 '               (ItemNew) - Vendor and Manufacturer field limits
+'   2.2.3:  Bug fix (SalesInventorySplit) - Show Available only
+'               (SalesInventory) - Switch OnHand to Available
+'           New: Add Last User and Date fields to OrderCommitManage
 '------------------------------------------------------------
 
 '------------------------------------------------------------
 ' Global constants
 '
 '------------------------------------------------------------
-Public Const ReleaseVersion As String = "2.2.2"
+Public Const ReleaseVersion As String = "2.2.3"
 ''' User Roles
 Public Const DevelLevel As String = "Devel"
 Public Const AdminLevel As String = "Admin"
