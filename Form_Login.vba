@@ -49,9 +49,11 @@ On Error GoTo cmdLogin_Click_Err
     If (IsNull(lstNames)) Then
         Beep
         MsgBox "Select an employee.", vbOKOnly, ""
+        GoTo cmdLogin_Click_Exit
     ElseIf (IsNull(txtPassword)) Then
         Beep
         MsgBox "Enter a password.", vbOKOnly, ""
+        GoTo cmdLogin_Click_Exit
     Else
         EmployeeID = lstNames
     End If
@@ -62,6 +64,7 @@ On Error GoTo cmdLogin_Click_Err
     Else
         Beep
         MsgBox "Incorrect password.", vbOKOnly, ""
+        GoTo cmdLogin_Click_Exit
     End If
 
 cmdLogin_Click_Exit:
@@ -79,6 +82,7 @@ End Sub
 '
 '------------------------------------------------------------
 Private Sub cmdExit_Click()
+    DoCmd.Close acForm, "Main"
     DoCmd.Quit
 End Sub
 
