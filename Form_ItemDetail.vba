@@ -247,8 +247,12 @@ Private Sub FillFields()
     End If
     CreateDate = Nz(rstItem!CreateDate, "")
 
-    ' Load image
-    Image.Picture = Nz(rstItem!ImagePath, "")
+    ' Load image if exists
+    If Not IsNull(rstItem!ImagePath) Then
+        If (Len(Dir(rstItem!ImagePath)) > 0) Then
+            Image.Picture = rstItem!ImagePath
+        End If
+    End If
 
     ' Order History
     CommitHistory.Form.RecordSource = "SELECT * FROM " & CommitQuery & " WHERE ID=" & CurrentItemID & ";"
