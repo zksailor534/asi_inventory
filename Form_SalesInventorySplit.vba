@@ -47,6 +47,12 @@ Private Sub Form_Open(Cancel As Integer)
     subForm2.Filter = "[Category]= '" & CategorySelectedBottom & "' AND [OnHand] > 0"
     subForm2.FilterOn = True
 
+    ' Engage default sorting
+    subForm1.OrderBy = "[Focus]"
+    subForm1.OrderByOn = True
+    subForm2.OrderBy = "[Focus]"
+    subForm2.OrderByOn = True
+
     ' Set column visibility
     SetColumnVisibility
 
@@ -69,6 +75,10 @@ Private Sub CategorySelectedTop_AfterUpdate()
     subForm.Filter = "[Category]= '" & CategorySelectedTop & "' AND [OnHand] > 0"
     subForm.FilterOn = True
 
+    ' Engage default sorting
+    subForm.OrderBy = "[Focus]"
+    subForm.OrderByOn = True
+
     SetColumnVisibility
 
 outNow:
@@ -89,6 +99,10 @@ Private Sub CategorySelectedBottom_AfterUpdate()
     ' Engage filter from category selection
     subForm.Filter = "[Category]= '" & CategorySelectedBottom & "' AND [OnHand] > 0"
     subForm.FilterOn = True
+
+    ' Engage default sorting
+    subForm.OrderBy = "[Focus]"
+    subForm.OrderByOn = True
 
     SetColumnVisibility
 
@@ -128,28 +142,6 @@ Private Sub cmdCloseSplit_Click()
     Else
         DoCmd.Close
     End If
-End Sub
-
-
-'------------------------------------------------------------
-' SortOrderEntered_AfterUpdate
-'
-'------------------------------------------------------------
-Private Sub SortOrderEntered_AfterUpdate()
-
-    Dim subFormCntrl As Control, sbForm As Access.Form
-
-    Set subFormCntrl = sbfrmInvSearch
-
-    Set sbForm = sbfrmInvSearch.Form
-    sbForm.OrderBy = SortOrderEntered
-    sbForm.OrderByOn = True
-
-    SortOrderEntered.SetFocus
-
-    Set subFormCntrl = Nothing
-    Set sbForm = Nothing
-
 End Sub
 
 
