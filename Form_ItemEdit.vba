@@ -101,6 +101,20 @@ End Sub
 
 
 '------------------------------------------------------------
+' cmdNewRecordID_Click
+'
+'------------------------------------------------------------
+Private Sub cmdNewRecordID_Click()
+    If (Prefix <> "") Then
+        Prefix = UCase(Prefix)
+        RecordID = Utilities.NewRecordID(Prefix, 1)
+    Else
+        MsgBox "No Record ID Prefix Provided.", vbOKOnly
+    End If
+End Sub
+
+
+'------------------------------------------------------------
 ' cmdBrowse_Click
 '
 '------------------------------------------------------------

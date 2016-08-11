@@ -419,19 +419,19 @@ Public Function NewRecordID(strRecordPrefix As String, lowBound As Long) As Stri
                     rst.MoveNext
                     If .EOF Then
                         ' Capture next record
-                        NewRecordID = strRecordPrefix & "-" & Format(lowBound, "0000")
+                        NewRecordID = UCase(strRecordPrefix) & "-" & Format(lowBound, "0000")
                         GoTo CleanUp
                     End If
                 Else
                     ' No record matches low bound, use it
-                    NewRecordID = strRecordPrefix & "-" & Format(lowBound, "0000")
+                    NewRecordID = UCase(strRecordPrefix) & "-" & Format(lowBound, "0000")
                     GoTo CleanUp
                 End If
             Loop
         End With
     Else
         ' No records found, use low bound
-        NewRecordID = strRecordPrefix & "-" & Format(lowBound, "0000")
+        NewRecordID = UCase(strRecordPrefix) & "-" & Format(lowBound, "0000")
     End If
 
 CleanUp:
@@ -683,7 +683,7 @@ Public Function StripRecordID(strRecordPrefix As String, strRecordID As String) 
     Dim regEx2 As New RegExp
     Dim regexReplace As String
 
-    regEx1.Pattern = "^" & strRecordPrefix & "-"
+    regEx1.Pattern = "^" & UCase(strRecordPrefix) & "-"
     regEx2.Pattern = "[^0-9]$"
     regEx1.IgnoreCase = True
     regEx2.IgnoreCase = True
@@ -709,7 +709,7 @@ Public Function GetRecordPrefix(strRecordID As String) As String
     regEx.IgnoreCase = True
     regexReplace = ""
 
-    GetRecordPrefix = regEx.Replace(strRecordID, regexReplace)
+    GetRecordPrefix = UCase(regEx.Replace(strRecordID, regexReplace))
 
 End Function
 

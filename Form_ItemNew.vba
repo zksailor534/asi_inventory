@@ -162,9 +162,8 @@ Private Sub updateReservedRecordIDs()
 
     CategoryID = Utilities.GetCategoryID(Category)
     If (CategoryID <> 0) Then
-        sqlQuery = "SELECT [RecordID],[VENDOR] FROM " & ItemDB & _
-            " WHERE Category = '" & Category & "' AND [Vendor] = 'RESERVED'" & _
-            " AND CreateOper = '" & EmployeeLogin & "'"
+        sqlQuery = "SELECT [RecordID],[VENDOR],[CreateOper] FROM " & ItemDB & _
+            " WHERE Category = '" & Category & "' AND [Vendor] = 'RESERVED'"
         RecordID.RowSource = sqlQuery
     End If
 End Sub
@@ -257,6 +256,7 @@ End Sub
 '------------------------------------------------------------
 Private Sub cmdNewRecordID_Click()
     If (Prefix <> "") Then
+        Prefix = UCase(Prefix)
         RecordID = Utilities.NewRecordID(Prefix, 1)
     Else
         MsgBox "No Record ID Prefix Provided.", vbOKOnly
