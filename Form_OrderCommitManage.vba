@@ -89,7 +89,7 @@ On Error GoTo cmdSave_Click_Err
     On Error GoTo 0
 
     ' Check if anything has changed
-    If (CLng(QtyCommitted) = rstCommit!QtyCommitted _
+    If (QtyCommitted = rstCommit!QtyCommitted _
         And SalesOrder = rstCommit!Reference) Then
         GoTo cmdSave_NoChange_Err
     End If
@@ -108,27 +108,23 @@ On Error GoTo cmdSave_Click_Err
 
     ' Check for valid Commit Quantity
     ' Must be numeric, positive, and less than or equal to available
-    If Not (IsNumeric(QtyCommitted = "")) Then
+    If Not (IsNumeric(QtyCommitted)) Then
         GoTo cmdSave_QtyCommitted_Err
     ElseIf CLng(QtyCommitted) <= 0 Then
         GoTo cmdSave_QtyCommitted_Err
     ElseIf CLng(QtyCommitted) > (rstCommit!OnHand + rstCommit!OnOrder - _
-        rstCommit!Committed + rstCommit!QtyCommitted - CLng(QtyCommitted)) Then
+        rstCommit!Committed + rstCommit!QtyCommitted) Then
         GoTo cmdSave_QtyCommitted_Err
     ElseIf (QtyAdjustCheck.Value = True) Then
-        If CLng(QtyCommitted) > (NewQuantity + rstCommit!OnOrder - _
+        If CLng(QtyCommitted) > (CLng(OnHand) + rstCommit!OnOrder - _
             rstCommit!Committed + rstCommit!QtyCommitted - CLng(QtyCommitted)) Then
             GoTo cmdSave_QtyCommitted_Err
         End If
     End If
 
-    ' Adjust quantity if called for
+    ' Check for valid adjust quantity if called for
     If (QtyAdjustCheck.Value = True) Then
-        If (CLng(NewQuantity) >= (Committed - rstCommit!QtyCommitted + QtyCommitted)) Then
-            Utilities.OperationEntry rstCommit!ID, "Inventory", _
-                "Changed OnHand from " & rstCommit!OnHand & " to " & NewQuantity & _
-                    " in Commit " & CurrentCommitID
-        Else
+        If ((CLng(OnHand) + rstCommit!OnOrder) < (Committed - rstCommit!QtyCommitted + QtyCommitted)) Then
             GoTo cmdSave_QtyAdjust_Err
         End If
     End If
@@ -141,18 +137,34 @@ On Error GoTo cmdSave_Click_Err
         !Reference = SalesOrder
         !Committed = Committed - !QtyCommitted + QtyCommitted
         !QtyCommitted = QtyCommitted
-        If (NewQuantity <> OnHand) Then
-            !OnHand = NewQuantity
+
+        ' Adjust Location if different
+        If (Location <> !Location) Then
+            Utilities.OperationEntry rstCommit!ID, "Inventory", _
+                "Changed Location from " & rstCommit!Location & " to " & Location & _
+                    " in Commit " & CurrentCommitID, "Move"
+            !Location = Location
             !LastOper = EmployeeLogin
             !LastDate = Now()
         End If
+
+        ' Adjust Quantity if different
+        If (OnHand <> !OnHand) Then
+            Utilities.OperationEntry rstCommit!ID, "Inventory", _
+                "Changed OnHand from " & rstCommit!OnHand & " to " & OnHand & _
+                    " in Commit " & CurrentCommitID, "Count"
+            !OnHand = OnHand
+            !LastOper = EmployeeLogin
+            !LastDate = Now()
+        End If
+
         .Update
     End With
 
     GoTo cmdSave_Success
 
 cmdSave_Click_Exit:
-    DoCmd.Close
+    FillFields
     Exit Sub
 
 cmdSave_Click_Err:
@@ -333,11 +345,7 @@ On Error GoTo cmdComplete_Click_Err
 
     ' Check if on hand quantity adjustment is valid
     If (QtyAdjustCheck.Value = True) Then
-        If (CLng(NewQuantity) >= (rstCommit!Committed - rstCommit!QtyCommitted)) Then
-            Utilities.OperationEntry rstCommit!ID, "Inventory", _
-                "Changed OnHand from " & (rstCommit!OnHand - rstCommit!QtyCommitted) & " to " & NewQuantity & _
-                    " after Commit " & CurrentCommitID & " Completion"
-        Else
+        If ((CLng(OnHand) + rstCommit!OnOrder) < (rstCommit!Committed - rstCommit!QtyCommitted)) Then
             GoTo cmdComplete_QtyAdjust_Err
         End If
     End If
@@ -346,15 +354,36 @@ On Error GoTo cmdComplete_Click_Err
     success = Utilities.Commit_Complete(rstCommit)
     If Not (success) Then
         GoTo cmdComplete_Complete_Err
+    Else
+        Utilities.OperationEntry rstCommit!ID, "Commit", _
+            "Completed Commitment " & CurrentCommitID & " from Sales Order " & CurrentSalesOrder
     End If
 
     ' Adjust quantity if called for
     If (QtyAdjustCheck.Value = True) Then
         With rstCommit
             .Edit
-            !OnHand = NewQuantity
-            !LastOper = EmployeeLogin
-            !LastDate = Now()
+
+            ' Adjust Location if different
+            If (Location <> !Location) Then
+                Utilities.OperationEntry rstCommit!ID, "Inventory", _
+                    "Changed Location from " & rstCommit!Location & " to " & Location & _
+                    " after Commit " & CurrentCommitID & " Completion", "Move"
+                !Location = Location
+                !LastOper = EmployeeLogin
+                !LastDate = Now()
+            End If
+
+            ' Adjust Quantity if different
+            If (OnHand <> !OnHand) Then
+                Utilities.OperationEntry rstCommit!ID, "Inventory", _
+                    "Changed OnHand from " & rstCommit!OnHand & " to " & OnHand & _
+                    " after Commit " & CurrentCommitID & " Completion", "Count"
+                !OnHand = OnHand
+                !LastOper = EmployeeLogin
+                !LastDate = Now()
+            End If
+
             .Update
         End With
     End If
@@ -431,13 +460,13 @@ End Sub
 '------------------------------------------------------------
 Private Sub QtyAdjustCheck_Click()
     If (QtyAdjustCheck.Value = True) Then
-        NewQuantity.Enabled = True
-        NewQuantity.Locked = False
-        Utilities.FieldAvailableSet Me.Controls("NewQuantity")
+        OnHand.Enabled = True
+        OnHand.Locked = False
+        Utilities.FieldAvailableSet Me.Controls("OnHand")
     Else
-        NewQuantity.Enabled = False
-        NewQuantity.Locked = True
-        Utilities.FieldAvailableRemove Me.Controls("NewQuantity")
+        OnHand.Enabled = False
+        OnHand.Locked = True
+        Utilities.FieldAvailableRemove Me.Controls("OnHand")
     End If
 End Sub
 
@@ -467,11 +496,12 @@ Private Sub FillFields()
     ItemWidth = Nz(rstCommit!ItemWidth, "")
     ItemHeight = Nz(rstCommit!ItemHeight, "")
     ItemDepth = Nz(rstCommit!ItemDepth, "")
-    Image.Picture = Nz(rstCommit!ImagePath, "")
+
+    DisplayImage Nz(rstCommit!ImagePath, "")
+
     Location = Nz(rstCommit!Location, "")
     OnHand = Nz(rstCommit!OnHand, "")
     Committed = Nz(rstCommit!Committed, "")
-    NewQuantity = Nz(rstCommit!OnHand, "")
 
     ' Fill in Last Change Date and user based on status
     If (Status = "A") Then
