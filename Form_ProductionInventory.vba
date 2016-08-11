@@ -43,6 +43,10 @@ Private Sub Form_Open(Cancel As Integer)
     subForm.Filter = "[Category]= '" & searchCategory & "' AND [OnHand] > 0"
     subForm.FilterOn = True
 
+    ' Engage default sorting
+    subForm.OrderBy = "[Focus]"
+    subForm.OrderByOn = True
+
     ' Set column visibility
     SetColumnVisibility
 
@@ -65,6 +69,10 @@ Private Sub CategorySelected_AfterUpdate()
     subForm.Filter = "[Category]= '" & searchCategory & "' AND [OnHand] > 0"
     Me.StockSelected.Value = "On Hand"
     subForm.FilterOn = True
+
+    ' Engage default sorting
+    subForm.OrderBy = "[Focus]"
+    subForm.OrderByOn = True
 
     SetColumnVisibility
 
@@ -116,6 +124,8 @@ Private Sub ClearFilterButton_Click()
     CurrentSalesOrder = ""
     Me.sbfrmInvSearch.Form.Filter = "[Category]= '" & searchCategory & "' AND [OnHand] > 0"
     Me.sbfrmInvSearch.Form.FilterOn = True
+    Me.sbfrmInvSearch.Form.OrderBy = "[Focus]"
+    Me.sbfrmInvSearch.Form.OrderByOn = True
     Me.sbfrmInvSearch.Form.Requery
 End Sub
 
@@ -130,6 +140,8 @@ Private Sub StockSelected_AfterUpdate()
         Me.sbfrmInvSearch.Form.Filter = "[Category]= '" & searchCategory & "' AND [OnHand] > 0"
         Me.sbfrmInvSearch.Form.FilterOn = True
         Me.sbfrmInvSearch.Form.Controls("OnOrder").ColumnHidden = True
+        Me.sbfrmInvSearch.Form.OrderBy = "[Focus]"
+        Me.sbfrmInvSearch.Form.OrderByOn = True
         Me.sbfrmInvSearch.Form.Requery
     ElseIf (StockSelected.Value = "Inbound") Then
         Me.CategorySelected = ""
@@ -137,12 +149,16 @@ Private Sub StockSelected_AfterUpdate()
         Me.sbfrmInvSearch.Form.FilterOn = True
         Me.sbfrmInvSearch.Form.Controls("OnOrder").ColumnHidden = False
         Me.sbfrmInvSearch.Form.Controls("OnOrder").ColumnOrder = 5
+        Me.sbfrmInvSearch.Form.OrderBy = "[Focus]"
+        Me.sbfrmInvSearch.Form.OrderByOn = True
         Me.sbfrmInvSearch.Form.Requery
     ElseIf (StockSelected.Value = "Out of Stock") Then
         Me.CategorySelected = searchCategory
         Me.sbfrmInvSearch.Form.Filter = "[Category]= '" & searchCategory & "' AND [OnHand] <= 0"
         Me.sbfrmInvSearch.Form.FilterOn = True
         Me.sbfrmInvSearch.Form.Controls("OnOrder").ColumnHidden = True
+        Me.sbfrmInvSearch.Form.OrderBy = "[Focus]"
+        Me.sbfrmInvSearch.Form.OrderByOn = True
         Me.sbfrmInvSearch.Form.Requery
     End If
 End Sub

@@ -330,13 +330,12 @@ Private Sub UserRoleProperties(Role As String)
         CompleteCommitButton.Visible = False
         CompleteCommitButton.Enabled = False
     ElseIf (Role = ProdLevel) Then
-        ' Hide Complete Commit button for production
         CancelCommitButton.Visible = True
         CancelCommitButton.Enabled = True
         ReactivateCommitButton.Visible = True
         ReactivateCommitButton.Enabled = True
-        CompleteCommitButton.Visible = False
-        CompleteCommitButton.Enabled = False
+        CompleteCommitButton.Visible = True
+        CompleteCommitButton.Enabled = True
     Else
         CancelCommitButton.Visible = True
         CancelCommitButton.Enabled = True

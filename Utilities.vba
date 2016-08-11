@@ -3,10 +3,14 @@ Option Compare Database
 '------------------------------------------------------------
 ' American Surplus Inventory Database
 ' Author: Nathanael Greene
-' Current Revision: 2.4.0
-' Revision Date: 03/11/2016
+' Current Revision: 2.4.1
+' Revision Date: 03/22/2016
 '
 ' Revision History:
+'   2.4.1:  New (OrderCommitManage) Add confirmations for all buttons
+'           New (Update) Update form details new features
+'           Bug fix (OrderCommitManage, ProductionCommit) Complete not visible
+'           Bug fix (SalesInventory, ProductionInventory) Force sort by Focus
 '   2.4.0:  New (OrderCommitManage): Add reactivate command
 '           New (ProductionCommit): Add reactivate command
 '           New (InventorySearchSubForm): Add Focus field and set order by
@@ -78,7 +82,7 @@ Option Compare Database
 ' Global constants
 '
 '------------------------------------------------------------
-Public Const ReleaseVersion As String = "2.4.0"
+Public Const ReleaseVersion As String = "2.4.1"
 ''' User Roles
 Public Const DevelLevel As String = "Devel"
 Public Const AdminLevel As String = "Admin"
@@ -113,6 +117,7 @@ Public Const PrintRangeForm As String = "PrintRange"
 Public Const CategoriesEditForm As String = "CategoriesEdit"
 Public Const GenerateRecordIDForm As String = "GenerateRecordID"
 Public Const OrderCommitManageForm As String = "OrderCommitManage"
+Public Const UpdateForm As String = "Update"
 
 '------------------------------------------------------------
 ' Application properties
@@ -139,6 +144,7 @@ Public EmployeeLogin As String
 Public EmployeePassword As String
 Public EmployeeRole As String
 Public EmployeeCategory As String
+Public EmployeeVersion As String
 Public ValidLogin As Boolean
 Public ScreenWidth As Long
 
@@ -153,6 +159,7 @@ Public Property Let EmployeeID(Value As Long)
     EmployeePassword = GetEmployeePassword(Value)
     EmployeeRole = GetEmployeeRole(Value)
     EmployeeCategory = GetEmployeeDefaultCategory(Value)
+    EmployeeVersion = GetEmployeeVersion(Value)
 End Property
 
 
@@ -230,10 +237,16 @@ On Error GoTo CompleteLogin_Err
 
     On Error GoTo 0
     DoCmd.Close acForm, MainForm, acSaveNo
+
+    ' Check for update
+    If (EmployeeVersion <> ReleaseVersion) Then
+        DoCmd.OpenForm UpdateForm, acNormal, "", "", , acDialog
+    End If
+    SetEmployeeVersion (EmployeeID)
+
     DoCmd.OpenForm MainForm
     Forms(MainForm)!lblCurrentEmployeeName.Caption = "Hello, " & EmployeeName
     Forms(MainForm)!lblVersion.Caption = "Version " & ReleaseVersion
-    SetEmployeeVersion (EmployeeID)
     Err.Clear
 
 CompleteLogin_Exit:
@@ -303,11 +316,20 @@ End Function
 
 
 '------------------------------------------------------------
-' GetEmployeeRole
+' GetEmployeeDefaultCategory
 '
 '------------------------------------------------------------
 Private Function GetEmployeeDefaultCategory(ID As Long)
     GetEmployeeDefaultCategory = DLookup("DefaultCategory", EmployeeDB, "[ID]=" & ID)
+End Function
+
+
+'------------------------------------------------------------
+' GetEmployeeVersion
+'
+'------------------------------------------------------------
+Private Function GetEmployeeVersion(ID As Long)
+    GetEmployeeVersion = DLookup("Version", EmployeeDB, "[ID]=" & ID)
 End Function
 
 
