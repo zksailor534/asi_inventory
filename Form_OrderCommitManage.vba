@@ -1,8 +1,6 @@
 Option Compare Database
 Option Explicit
 
-Private rstItem As DAO.Recordset
-Private rstInventory As DAO.Recordset
 Private rstCommit As DAO.Recordset
 
 '------------------------------------------------------------
@@ -32,10 +30,7 @@ On Error GoTo Form_Load_Err
 
     ' Open recordsets
     open_db
-    Set rstCommit = db.OpenRecordset("SELECT * FROM " & CommitDB & " WHERE [ID] = " & CurrentCommitID)
-
-    Set rstItem = db.OpenRecordset("SELECT * FROM " & ItemDB & " WHERE [ID] = " & rstCommit!ItemID)
-    Set rstInventory = db.OpenRecordset("SELECT * FROM " & InventoryDB & " WHERE [ItemID] = " & rstCommit!ItemID)
+    Set rstCommit = db.OpenRecordset("SELECT * FROM " & CommitQuery & " WHERE [CommitID] = " & CurrentCommitID)
 
     ' Check for valid commit status
     If (rstCommit!Status <> "A") And (rstCommit!Status <> "X") And (rstCommit!Status <> "C") Then
@@ -71,10 +66,6 @@ End Sub
 '------------------------------------------------------------
 Private Sub Form_Close()
     ' Clean Up
-    rstItem.Close
-    Set rstItem = Nothing
-    rstInventory.Close
-    Set rstInventory = Nothing
     rstCommit.Close
     Set rstCommit = Nothing
 End Sub
@@ -116,12 +107,12 @@ On Error GoTo cmdSave_Click_Err
         GoTo cmdSave_QtyCommitted_Err
     ElseIf CLng(QtyCommitted) <= 0 Then
         GoTo cmdSave_QtyCommitted_Err
-    ElseIf CLng(QtyCommitted) > (rstInventory!OnHand + rstInventory!OnOrder - _
-        rstInventory!Committed + rstCommit!QtyCommitted - CLng(QtyCommitted)) Then
+    ElseIf CLng(QtyCommitted) > (rstCommit!OnHand + rstCommit!OnOrder - _
+        rstCommit!Committed + rstCommit!QtyCommitted - CLng(QtyCommitted)) Then
         GoTo cmdSave_QtyCommitted_Err
     ElseIf (QtyAdjustCheck.Value = True) Then
-        If CLng(QtyCommitted) > (NewQuantity + rstInventory!OnOrder - _
-            rstInventory!Committed + rstCommit!QtyCommitted - CLng(QtyCommitted)) Then
+        If CLng(QtyCommitted) > (NewQuantity + rstCommit!OnOrder - _
+            rstCommit!Committed + rstCommit!QtyCommitted - CLng(QtyCommitted)) Then
             GoTo cmdSave_QtyCommitted_Err
         End If
     End If
@@ -129,8 +120,8 @@ On Error GoTo cmdSave_Click_Err
     ' Adjust quantity if called for
     If (QtyAdjustCheck.Value = True) Then
         If (CLng(NewQuantity) >= (Committed - rstCommit!QtyCommitted + QtyCommitted)) Then
-            Utilities.OperationEntry rstItem!ID, "Inventory", _
-                "Changed OnHand from " & rstInventory!OnHand & " to " & NewQuantity & _
+            Utilities.OperationEntry rstCommit!ID, "Inventory", _
+                "Changed OnHand from " & rstCommit!OnHand & " to " & NewQuantity & _
                     " in Commit " & CurrentCommitID
         Else
             GoTo cmdSave_QtyAdjust_Err
@@ -210,9 +201,9 @@ On Error GoTo cmdDelete_Click_Err
 
     ' Check if on hand quantity adjustment is valid
     If (QtyAdjustCheck.Value = True) Then
-        If (CLng(NewQuantity) >= (rstInventory!Committed - rstCommit!QtyCommitted)) Then
-            Utilities.OperationEntry rstItem!ID, "Inventory", _
-                "Changed OnHand from " & rstInventory!OnHand & " to " & NewQuantity & _
+        If (CLng(NewQuantity) >= (rstCommit!Committed - rstCommit!QtyCommitted)) Then
+            Utilities.OperationEntry rstCommit!ID, "Inventory", _
+                "Changed OnHand from " & rstCommit!OnHand & " to " & NewQuantity & _
                     " after Commit " & CurrentCommitID & " Deletion"
         Else
             GoTo cmdDelete_QtyAdjust_Err
@@ -283,9 +274,9 @@ On Error GoTo cmdComplete_Click_Err
 
     ' Check if on hand quantity adjustment is valid
     If (QtyAdjustCheck.Value = True) Then
-        If (CLng(NewQuantity) >= (rstInventory!Committed - rstCommit!QtyCommitted)) Then
-            Utilities.OperationEntry rstItem!ID, "Inventory", _
-                "Changed OnHand from " & (rstInventory!OnHand - rstCommit!QtyCommitted) & " to " & NewQuantity & _
+        If (CLng(NewQuantity) >= (rstCommit!Committed - rstCommit!QtyCommitted)) Then
+            Utilities.OperationEntry rstCommit!ID, "Inventory", _
+                "Changed OnHand from " & (rstCommit!OnHand - rstCommit!QtyCommitted) & " to " & NewQuantity & _
                     " after Commit " & CurrentCommitID & " Completion"
         Else
             GoTo cmdComplete_QtyAdjust_Err
@@ -354,7 +345,7 @@ End Sub
 '
 '------------------------------------------------------------
 Private Sub Image_DblClick(Cancel As Integer)
-    Utilities.SendMessage True, , , rstItem!ImagePath
+    Utilities.SendMessage True, , , rstCommit!ImagePath
 End Sub
 
 '------------------------------------------------------------
@@ -386,24 +377,24 @@ Private Sub FillFields()
     QtyCommitted = Nz(rstCommit!QtyCommitted, "")
     CommitUser = Nz(rstCommit!OperatorActive, "")
     CommitDate = Nz(rstCommit!DateActive, "")
-    Product = Nz(rstItem!Product, "")
-    RecordID = Nz(rstItem!RecordID, "")
-    Category = Nz(rstItem!Category, "")
-    Manufacturer = Nz(rstItem!Manufacturer, "")
-    Style = Nz(rstItem!Style, "")
-    Color = Nz(rstItem!Color, "")
-    Condition = Nz(rstItem!Condition, "")
-    Vendor = Nz(rstItem!Vendor, "")
-    Description = Nz(rstItem!Description, "")
-    ItemLength = Nz(rstItem!ItemLength, "")
-    ItemWidth = Nz(rstItem!ItemWidth, "")
-    ItemHeight = Nz(rstItem!ItemHeight, "")
-    ItemDepth = Nz(rstItem!ItemDepth, "")
-    Image.Picture = Nz(rstItem!ImagePath, "")
-    Location = Nz(rstInventory!Location, "")
-    OnHand = Nz(rstInventory!OnHand, "")
-    Committed = Nz(rstInventory!Committed, "")
-    NewQuantity = Nz(rstInventory!OnHand, "")
+    Product = Nz(rstCommit!Product, "")
+    RecordID = Nz(rstCommit!RecordID, "")
+    Category = Nz(rstCommit!Category, "")
+    Manufacturer = Nz(rstCommit!Manufacturer, "")
+    Style = Nz(rstCommit!Style, "")
+    Color = Nz(rstCommit!Color, "")
+    Condition = Nz(rstCommit!Condition, "")
+    Vendor = Nz(rstCommit!Vendor, "")
+    Description = Nz(rstCommit!Description, "")
+    ItemLength = Nz(rstCommit!ItemLength, "")
+    ItemWidth = Nz(rstCommit!ItemWidth, "")
+    ItemHeight = Nz(rstCommit!ItemHeight, "")
+    ItemDepth = Nz(rstCommit!ItemDepth, "")
+    Image.Picture = Nz(rstCommit!ImagePath, "")
+    Location = Nz(rstCommit!Location, "")
+    OnHand = Nz(rstCommit!OnHand, "")
+    Committed = Nz(rstCommit!Committed, "")
+    NewQuantity = Nz(rstCommit!OnHand, "")
 
     ' Fill in Last Change Date and user based on status
     If (Status = "A") Then
