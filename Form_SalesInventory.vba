@@ -1,6 +1,7 @@
 Option Compare Database
 Option Explicit
 
+Private searchCategory As String
 
 '------------------------------------------------------------
 ' Form_Open
@@ -34,11 +35,12 @@ Private Sub Form_Open(Cancel As Integer)
     subForm.Controls("LastDate").ColumnHidden = True
 
     ' Default Stock Selected combobox to On Hand
-    Me.StockSelected.Value = "On Hand"
+    Me.StockSelected.Value = "Available"
     subForm.Controls("OnOrder").ColumnHidden = True
 
     ' Engage filter from category selection
-    subForm.Filter = "[Category]= '" & CategorySelected & "' AND [OnHand] > 0"
+    searchCategory = CategorySelected
+    subForm.Filter = "[Category]= '" & searchCategory & "' AND [Available] > 0"
     subForm.FilterOn = True
 
     ' Set column visibility
@@ -62,7 +64,9 @@ Private Sub CategorySelected_AfterUpdate()
     Set subForm = sbfrmInvSearch.Form
 
     ' Engage filter from category selection
-    subForm.Filter = "[Category]= '" & CategorySelected & "' AND [OnHand] > 0"
+    searchCategory = CategorySelected
+    subForm.Filter = "[Category]= '" & searchCategory & "' AND [Available] > 0"
+    Me.StockSelected.Value = "Available"
     subForm.FilterOn = True
 
     SetColumnVisibility
@@ -78,12 +82,14 @@ End Sub
 '
 '------------------------------------------------------------
 Private Sub StockSelected_AfterUpdate()
-    If (StockSelected.Value = "On Hand") Then
-        Me.sbfrmInvSearch.Form.Filter = "[Category]= '" & CategorySelected & "' AND [OnHand] > 0"
+    If (StockSelected.Value = "Available") Then
+        Me.CategorySelected = searchCategory
+        Me.sbfrmInvSearch.Form.Filter = "[Category]= '" & searchCategory & "' AND [Available] > 0"
         Me.sbfrmInvSearch.Form.FilterOn = True
         Me.sbfrmInvSearch.Form.Controls("OnOrder").ColumnHidden = True
         Me.sbfrmInvSearch.Form.Requery
-    ElseIf (StockSelected.Value = "Inbound") Then
+    ElseIf (StockSelected.Value = "Inbound Only") Then
+        Me.CategorySelected = ""
         Me.sbfrmInvSearch.Form.Filter = "[OnOrder] > 0"
         Me.sbfrmInvSearch.Form.FilterOn = True
         Me.sbfrmInvSearch.Form.Controls("OnOrder").ColumnHidden = False
@@ -116,7 +122,7 @@ End Sub
 Private Sub PrintButton_Click()
     On Error GoTo PrintButton_ErrHandler
 
-    PrintCategorySelected = CategorySelected
+    PrintCategorySelected = searchCategory
     PrintFilter = sbfrmInvSearch.Form.Filter
 
     ' Open PrintRange form
@@ -192,7 +198,7 @@ Private Sub SetColumnVisibility()
     ' Set column visibility and order
     For Each formCntrl In subForm.Controls
         If formCntrl.ControlType <> acLabel Then
-            ColumnValue = Utilities.CategoryFieldOrder(CategorySelected, formCntrl.Name)
+            ColumnValue = Utilities.CategoryFieldOrder(searchCategory, formCntrl.Name)
             If ColumnValue <> -1 Then
                 ' Column is visible
                 formCntrl.ColumnHidden = False
