@@ -417,7 +417,7 @@ Private Sub SaveNewItem()
 
     ' Get new record ID
     rstItem.Bookmark = rstItem.LastModified
-    ItemId = rstItem("ID")
+    ItemID = rstItem("ID")
 End Sub
 
 
@@ -497,7 +497,7 @@ Private Sub SaveReservedItem()
 
     ' Save new item ID for Inventory entry
     rstItem.Bookmark = rstItem.LastModified
-    ItemId = rstItem("ID")
+    ItemID = rstItem("ID")
 End Sub
 
 
@@ -509,7 +509,7 @@ Private Sub SaveInventory()
     ' Save Inventory Record
     With rstNewInventory
         .AddNew
-        !ItemId = ItemId
+        !ItemID = ItemID
         !Location = Location
 
         If (Location = "INBOUND") Then

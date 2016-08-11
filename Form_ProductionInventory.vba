@@ -296,12 +296,12 @@ End Function
 Private Function GetRecordItemID(RecordID As String) As Long
     On Error Resume Next
 
-    Dim ItemId As Long
+    Dim ItemID As Long
 
-    ItemId = DLookup("ID", WarehouseQuery, "[Category]= '" & CategorySelected & _
+    ItemID = DLookup("ID", WarehouseQuery, "[Category]= '" & CategorySelected & _
         "' AND [RecordID]='" & RecordID & "'")
-    If Not (IsNull(ItemId)) Then
-        GetRecordItemID = ItemId
+    If Not (IsNull(ItemID)) Then
+        GetRecordItemID = ItemID
     Else
         GetRecordItemID = 0
     End If

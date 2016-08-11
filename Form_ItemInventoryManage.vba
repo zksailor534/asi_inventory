@@ -67,6 +67,7 @@ On Error GoTo cmdSave_Click_Err
     Else
         GoTo cmdSave_Click_Exit
     End If
+    MsgBox "Item Successfully Saved!", , "Save Complete"
 
 cmdSave_Click_Exit:
     Exit Sub
