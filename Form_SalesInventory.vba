@@ -35,12 +35,12 @@ Private Sub Form_Open(Cancel As Integer)
     subForm.Controls("LastDate").ColumnHidden = True
 
     ' Default Stock Selected combobox to On Hand
-    Me.StockSelected.Value = "Available"
+    Me.StockSelected.Value = "On Hand"
     subForm.Controls("OnOrder").ColumnHidden = True
 
     ' Engage filter from category selection
     searchCategory = CategorySelected
-    subForm.Filter = "[Category]= '" & searchCategory & "' AND [Available] > 0"
+    subForm.Filter = "[Category]= '" & searchCategory & "' AND [OnHand] > 0"
     subForm.FilterOn = True
 
     ' Set column visibility
@@ -65,8 +65,8 @@ Private Sub CategorySelected_AfterUpdate()
 
     ' Engage filter from category selection
     searchCategory = CategorySelected
-    subForm.Filter = "[Category]= '" & searchCategory & "' AND [Available] > 0"
-    Me.StockSelected.Value = "Available"
+    subForm.Filter = "[Category]= '" & searchCategory & "' AND [OnHand] > 0"
+    Me.StockSelected.Value = "On Hand"
     subForm.FilterOn = True
 
     SetColumnVisibility
@@ -82,9 +82,9 @@ End Sub
 '
 '------------------------------------------------------------
 Private Sub StockSelected_AfterUpdate()
-    If (StockSelected.Value = "Available") Then
+    If (StockSelected.Value = "On Hand") Then
         Me.CategorySelected = searchCategory
-        Me.sbfrmInvSearch.Form.Filter = "[Category]= '" & searchCategory & "' AND [Available] > 0"
+        Me.sbfrmInvSearch.Form.Filter = "[Category]= '" & searchCategory & "' AND [OnHand] > 0"
         Me.sbfrmInvSearch.Form.FilterOn = True
         Me.sbfrmInvSearch.Form.Controls("OnOrder").ColumnHidden = True
         Me.sbfrmInvSearch.Form.Requery

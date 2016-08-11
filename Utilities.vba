@@ -3,25 +3,31 @@ Option Compare Database
 '------------------------------------------------------------
 ' American Surplus Inventory Database
 ' Author: Nathanael Greene
-' Current Revision: 2.2.3
-' Revision Date: 10/21/2015
+' Current Revision: 2.3.0
+' Revision Date: 11/02/2015
 '
 ' Revision History:
-'   2.0.0:  Initial Release replaces legacy database
-'           Complete GUI overhaul
-'           Introduction of product-based structure
-'           Add commit management for all users
-'           Add Generate Record ID tools
-'   2.0.1:  Bug fixes (ItemEdit, ItemNew, ItemInventoryManage,
-'               Main, CategoriesEdit)
-'   2.0.2:  Bug fixes (ItemEdit, ItemNew) - invalid null in
-'               numeric inputs
-'   2.0.3:  Bug fixes (Commit_Cancel, ItemNew) - cancel had
-'               wrong sign (committing more)
-'               Added Record ID search to Inventory Manage
-'               Added scroll bar to ItemNew
-'   2.0.4:  Bug fix (Utilities) - Commit_Cancel & Commit_Complete
-'               missing recordset reference
+'   2.3.0:  New: Updated ItemDetail with new design and Image field
+'           New: Updated ItemNew with new design and Image field
+'           New: Updated ItemEdit with new design and Image field
+'           New: Added GetRecordPrefix, SendMessage to Utilities
+'   2.2.3:  Bug fix (SalesInventorySplit) - Show Available only
+'               (SalesInventory) - Switch OnHand to Available
+'           New: Add Last User and Date fields to OrderCommitManage
+'   2.2.2:  Bug fix (ProductionInventory) - Fix RecordID Filter
+'               (ItemNew) - Vendor and Manufacturer field limits
+'   2.2.1:  Bug fix - re-link to database backend
+'   2.2.0:  New: Reorganized program into Sales, Production, Admin
+'               Changed Print Range to print whole screen
+'               Incorporated SW Version recording
+'               Eliminated Subcategory field in Items
+'   2.1.3:  Bug fix (Commit_Complete) - not allowed to complete
+'               when Committed > OnHand (+ Onorder added)
+'   2.1.2:  Bug fix (NewRecordID) - not finding next record
+'               after full list
+'           Bug fix (CategoriesDS) - Field12 not being updated in form
+'           Bug fix (EmployeesDS) - Roles selector not working
+'   2.1.1:  Bug fix (Commit_Complete)
 '   2.1.0:  Bug fix (ItemInventoryManage) - Operations changes
 '               overwrite; save L,W,H,D as Single
 '           Bug fix (Utilities) - Commit_complete allowed <0
@@ -33,30 +39,28 @@ Option Compare Database
 '           Upgraded NewRecordID calculation
 '           Added Record ID reservation system
 '           Add Inbound item toggle to InventoryManage (replace Print)
-'   2.1.1:  Bug fix (Commit_Complete)
-'   2.1.2:  Bug fix (NewRecordID) - not finding next record
-'               after full list
-'           Bug fix (CategoriesDS) - Field12 not being updated in form
-'           Bug fix (EmployeesDS) - Roles selector not working
-'   2.1.3:  Bug fix (Commit_Complete) - not allowed to complete
-'               when Committed > OnHand (+ Onorder added)
-'   2.2.0:  New: Reorganized program into Sales, Production, Admin
-'               Changed Print Range to print whole screen
-'               Incorporated SW Version recording
-'               Eliminated Subcategory field in Items
-'   2.2.1:  Bug fix - re-link to database backend
-'   2.2.2:  Bug fix (ProductionInventory) - Fix RecordID Filter
-'               (ItemNew) - Vendor and Manufacturer field limits
-'   2.2.3:  Bug fix (SalesInventorySplit) - Show Available only
-'               (SalesInventory) - Switch OnHand to Available
-'           New: Add Last User and Date fields to OrderCommitManage
+'   2.0.4:  Bug fix (Utilities) - Commit_Cancel & Commit_Complete
+'               missing recordset reference
+'   2.0.3:  Bug fixes (Commit_Cancel, ItemNew) - cancel had
+'               wrong sign (committing more)
+'               Added Record ID search to Inventory Manage
+'               Added scroll bar to ItemNew
+'   2.0.2:  Bug fixes (ItemEdit, ItemNew) - invalid null in
+'               numeric inputs
+'   2.0.1:  Bug fixes (ItemEdit, ItemNew, ItemInventoryManage,
+'               Main, CategoriesEdit)
+'   2.0.0:  Initial Release replaces legacy database
+'           Complete GUI overhaul
+'           Introduction of product-based structure
+'           Add commit management for all users
+'           Add Generate Record ID tools
 '------------------------------------------------------------
 
 '------------------------------------------------------------
 ' Global constants
 '
 '------------------------------------------------------------
-Public Const ReleaseVersion As String = "2.2.3"
+Public Const ReleaseVersion As String = "2.3.0"
 ''' User Roles
 Public Const DevelLevel As String = "Devel"
 Public Const AdminLevel As String = "Admin"
@@ -687,6 +691,25 @@ End Function
 
 
 '------------------------------------------------------------
+' GetRecordPrefix
+' Retrieves prefix from Record ID
+'------------------------------------------------------------
+Public Function GetRecordPrefix(strRecordID As String) As String
+
+    Dim regEx As New RegExp
+    Dim regEx2 As New RegExp
+    Dim regexReplace As String
+
+    regEx.Pattern = "-.*$"
+    regEx.IgnoreCase = True
+    regexReplace = ""
+
+    GetRecordPrefix = regEx.Replace(strRecordID, regexReplace)
+
+End Function
+
+
+'------------------------------------------------------------
 ' IsValidCategory
 ' Check if given string is valid category
 '------------------------------------------------------------
@@ -1030,3 +1053,59 @@ RecordIDReserve_Err:
     MsgBox "Error: (" & Err.Number & ") " & Err.Description, vbCritical
     Resume RecordIDReserve_Exit
 End Function
+
+
+'------------------------------------------------------------
+' SendMessage
+'
+'------------------------------------------------------------
+Sub SendMessage(DisplayMsg As Boolean, _
+    Optional strRecipient As String, _
+    Optional strSubject As String, _
+    Optional AttachmentPath As String)
+
+    Dim objOutlook As Outlook.Application
+    Dim objOutlookMsg As Outlook.MailItem
+    Dim objOutlookRecip As Outlook.Recipient
+    Dim objOutlookAttach As Object
+
+    ' Create the Outlook session
+    Set objOutlook = CreateObject("Outlook.Application")
+
+    ' Create the message
+    Set objOutlookMsg = objOutlook.CreateItem(olMailItem)
+
+    With objOutlookMsg
+        ' Add the To recipient(s) to the message
+        If (strRecipient <> "") Then
+            Set objOutlookRecip = .Recipients.Add(strRecipient)
+            objOutlookRecip.Type = olTo
+        End If
+
+        ' Set the Subject, Body, and Importance of the message
+        .Subject = strSubject
+
+        ' Add attachments to the message
+        If Not IsMissing(AttachmentPath) Then
+            Set objOutlookAttach = .Attachments.Add(AttachmentPath)
+        End If
+
+        ' Resolve each Recipient's name
+        For Each objOutlookRecip In .Recipients
+            objOutlookRecip.Resolve
+        Next
+
+        ' Should we display the message before sending?
+        If DisplayMsg Then
+            .Display
+        Else
+            .Save
+        End If
+    End With
+
+    Set objOutlookMsg = Nothing
+    Set objOutlook = Nothing
+    Set objOutlookRecip = Nothing
+    Set objOutlookAttach = Nothing
+
+End Sub
