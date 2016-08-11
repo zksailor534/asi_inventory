@@ -98,7 +98,7 @@ cmdCommit_getSO:
         .AddNew
         !Location = Location
         !Reference = salesOrderPrompt
-        !ItemId = ItemId
+        !ItemID = ItemID
         !Status = "A"
         !QtyCommitted = commitQuantity
         !OperatorActive = EmployeeLogin
