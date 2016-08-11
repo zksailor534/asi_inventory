@@ -381,6 +381,22 @@ Private Sub FillFields()
     OnHand = Nz(rstCommit!OnHand, "")
     Committed = Nz(rstCommit!Committed, "")
     NewQuantity = Nz(rstCommit!OnHand, "")
+
+    ' Fill in Last Change Date and user based on status
+    If (Status = "A") Then
+        LastUser = ""
+        LastDate = ""
+    ElseIf (Status = "X") Then
+        LastUser = Nz(rstCommit!OperatorCancel, "")
+        LastDate = Nz(rstCommit!DateCancel, "")
+    ElseIf (Status = "P") Then
+        LastUser = Nz(rstCommit!OperatorPicked, "")
+        LastDate = Nz(rstCommit!DatePicked, "")
+    ElseIf (Status = "C") Then
+        LastUser = Nz(rstCommit!OperatorComplete, "")
+        LastDate = Nz(rstCommit!DateComplete, "")
+    End If
+
 End Sub
 
 
@@ -393,6 +409,8 @@ Private Sub SetTitleStatus()
         Me.lblStatusTitle.Caption = "Active"
     ElseIf Me.Status = "X" Then
         Me.lblStatusTitle.Caption = "Cancelled"
+    ElseIf Me.Status = "P" Then
+        Me.lblStatusTitle.Caption = "Picked"
     ElseIf Me.Status = "C" Then
         Me.lblStatusTitle.Caption = "Completed"
     Else
