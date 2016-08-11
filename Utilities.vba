@@ -3,8 +3,8 @@ Option Compare Database
 '------------------------------------------------------------
 ' American Surplus Inventory Database
 ' Author: Nathanael Greene
-' Current Revision: 2.2.0
-' Revision Date: 10/17/2015
+' Current Revision: 2.2.1
+' Revision Date: 10/19/2015
 '
 ' Revision History:
 '   2.0.0:  Initial Release replaces legacy database
@@ -44,13 +44,14 @@ Option Compare Database
 '               Changed Print Range to print whole screen
 '               Incorporated SW Version recording
 '               Eliminated Subcategory field in Items
+'   2.2.1:  Bug fix - re-link to database backend
 '------------------------------------------------------------
 
 '------------------------------------------------------------
 ' Global constants
 '
 '------------------------------------------------------------
-Public Const ReleaseVersion As String = "2.2.0"
+Public Const ReleaseVersion As String = "2.2.1"
 ''' User Roles
 Public Const DevelLevel As String = "Devel"
 Public Const AdminLevel As String = "Admin"
@@ -478,7 +479,7 @@ Public Sub RecalculateCommit()
 
         ' Open active commit table entries for given item
         sqlQuery = "SELECT QtyCommitted FROM " & CommitDB & _
-            " WHERE [Status] = 'A' AND [ItemID] = " & rstInventory!ItemId
+            " WHERE [Status] = 'A' AND [ItemID] = " & rstInventory!ItemID
         Set rstCommit = db.OpenRecordset(sqlQuery)
 
         If Not (rstCommit.EOF) Then
@@ -541,7 +542,7 @@ Public Sub RecalculateOriginalQuantity()
 
         ' Open active commit table entries for given item
         sqlQuery = "SELECT QtyCommitted FROM " & CommitDB & _
-            " WHERE [Status] = 'C' AND [ItemID] = " & rstInventory!ItemId
+            " WHERE [Status] = 'C' AND [ItemID] = " & rstInventory!ItemID
         Set rstCommit = db.OpenRecordset(sqlQuery)
 
         If Not (rstCommit.EOF) Then
@@ -955,7 +956,7 @@ End Function
 ' OperationEntry
 '
 '------------------------------------------------------------
-Public Sub OperationEntry(ItemId As Long, Operation As String, Description As String)
+Public Sub OperationEntry(ItemID As Long, Operation As String, Description As String)
     On Error GoTo OperationEntry_Err
 
     Dim rst As Recordset
@@ -964,7 +965,7 @@ Public Sub OperationEntry(ItemId As Long, Operation As String, Description As St
 
     With rst
         .AddNew
-        !ItemId = ItemId
+        !ItemID = ItemID
         !Operator = EmployeeLogin
         !Date = Now()
         !Operation = Operation
