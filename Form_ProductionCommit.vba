@@ -16,7 +16,11 @@ Private Sub Form_Open(Cancel As Integer)
     SetScreenSize
 
     ' By default display all commits and status
-    StatusSelect = "All"
+    If (Len(commitSelectStatus) > 0) Then
+        StatusSelect = commitSelectStatus
+    Else
+        StatusSelect = "Active"
+    End If
     Me.sbfrmOrderSearch.Form.Status.ColumnHidden = False
 
     ' Engage filter from Committed status
@@ -86,6 +90,7 @@ End Sub
 '
 '------------------------------------------------------------
 Private Sub StatusSelect_AfterUpdate()
+    commitSelectStatus = StatusSelect
     Me.sbfrmOrderSearch.Form.Filter = GetFilter(EmployeeRole, SalesOrderFiltered, StatusSelect)
     Me.sbfrmOrderSearch.Form.FilterOn = True
     Me.sbfrmOrderSearch.Form.Requery

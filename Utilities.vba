@@ -147,6 +147,7 @@ Public EmployeeCategory As String
 Public EmployeeVersion As String
 Public ValidLogin As Boolean
 Public ScreenWidth As Long
+Public commitSelectStatus As String
 
 Public Property Get EmployeeID() As Long
     EmployeeID = pvEmployeeID
@@ -244,6 +245,7 @@ On Error GoTo CompleteLogin_Err
     End If
     SetEmployeeVersion (EmployeeID)
 
+    commitSelectStatus = ""
     DoCmd.OpenForm MainForm
     Forms(MainForm)!lblCurrentEmployeeName.Caption = "Hello, " & EmployeeName
     Forms(MainForm)!lblVersion.Caption = "Version " & ReleaseVersion
