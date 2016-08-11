@@ -1,6 +1,7 @@
 Option Compare Database
 Option Explicit
 
+Private searchCategory As String
 
 '------------------------------------------------------------
 ' Form_Open
@@ -38,7 +39,8 @@ Private Sub Form_Open(Cancel As Integer)
     subForm.Controls("OnOrder").ColumnHidden = True
 
     ' Engage filter from category selection
-    subForm.Filter = "[Category]= '" & CategorySelected & "' AND [OnHand] > 0"
+    searchCategory = CategorySelected
+    subForm.Filter = "[Category]= '" & searchCategory & "' AND [OnHand] > 0"
     subForm.FilterOn = True
 
     ' Set column visibility
@@ -59,7 +61,9 @@ Private Sub CategorySelected_AfterUpdate()
     Set subForm = sbfrmInvSearch.Form
 
     ' Engage filter from category selection
-    subForm.Filter = "[Category]= '" & CategorySelected & "' AND [OnHand] > 0"
+    searchCategory = CategorySelected
+    subForm.Filter = "[Category]= '" & searchCategory & "' AND [OnHand] > 0"
+    Me.StockSelected.Value = "On Hand"
     subForm.FilterOn = True
 
     SetColumnVisibility
@@ -90,7 +94,7 @@ Private Sub IDFilterButton_Click()
     Else
         If ValidRecordID(RecordIDFilter) Then
             ' Engage filter from RecordID selection
-            Me.sbfrmInvSearch.Form.Filter = "[Category]='" & CategorySelected & "' AND [OnHand]>0" & _
+            Me.sbfrmInvSearch.Form.Filter = "[Category]='" & searchCategory & "' AND [OnHand]>0" & _
                 " AND [RecordID] = '" & RecordIDFilter & "'"
             Me.sbfrmInvSearch.Form.FilterOn = True
             Me.sbfrmInvSearch.Form.Requery
@@ -110,7 +114,7 @@ End Sub
 Private Sub ClearFilterButton_Click()
     RecordIDFilter = ""
     CurrentSalesOrder = ""
-    Me.sbfrmInvSearch.Form.Filter = "[Category]= '" & CategorySelected & "' AND [OnHand] > 0"
+    Me.sbfrmInvSearch.Form.Filter = "[Category]= '" & searchCategory & "' AND [OnHand] > 0"
     Me.sbfrmInvSearch.Form.FilterOn = True
     Me.sbfrmInvSearch.Form.Requery
 End Sub
@@ -122,18 +126,21 @@ End Sub
 '------------------------------------------------------------
 Private Sub StockSelected_AfterUpdate()
     If (StockSelected.Value = "On Hand") Then
-        Me.sbfrmInvSearch.Form.Filter = "[Category]= '" & CategorySelected & "' AND [OnHand] > 0"
+        Me.CategorySelected = searchCategory
+        Me.sbfrmInvSearch.Form.Filter = "[Category]= '" & searchCategory & "' AND [OnHand] > 0"
         Me.sbfrmInvSearch.Form.FilterOn = True
         Me.sbfrmInvSearch.Form.Controls("OnOrder").ColumnHidden = True
         Me.sbfrmInvSearch.Form.Requery
     ElseIf (StockSelected.Value = "Inbound") Then
+        Me.CategorySelected = ""
         Me.sbfrmInvSearch.Form.Filter = "[OnOrder] > 0"
         Me.sbfrmInvSearch.Form.FilterOn = True
         Me.sbfrmInvSearch.Form.Controls("OnOrder").ColumnHidden = False
         Me.sbfrmInvSearch.Form.Controls("OnOrder").ColumnOrder = 5
         Me.sbfrmInvSearch.Form.Requery
     ElseIf (StockSelected.Value = "Out of Stock") Then
-        Me.sbfrmInvSearch.Form.Filter = "[Category]= '" & CategorySelected & "' AND [OnHand] <= 0"
+        Me.CategorySelected = searchCategory
+        Me.sbfrmInvSearch.Form.Filter = "[Category]= '" & searchCategory & "' AND [OnHand] <= 0"
         Me.sbfrmInvSearch.Form.FilterOn = True
         Me.sbfrmInvSearch.Form.Controls("OnOrder").ColumnHidden = True
         Me.sbfrmInvSearch.Form.Requery
@@ -229,7 +236,7 @@ Private Sub SetColumnVisibility()
     ' Set column visibility and order
     For Each formCntrl In subForm.Controls
         If formCntrl.ControlType <> acLabel Then
-            ColumnValue = Utilities.CategoryFieldOrder(CategorySelected, formCntrl.Name)
+            ColumnValue = Utilities.CategoryFieldOrder(searchCategory, formCntrl.Name)
             If ColumnValue <> -1 Then
                 ' Column is visible
                 formCntrl.ColumnHidden = False
@@ -279,7 +286,7 @@ End Sub
 '------------------------------------------------------------
 Private Function ValidRecordID(RecordID As String) As Boolean
     On Error Resume Next
-    If Not (IsNull(DLookup("RecordID", WarehouseQuery, "[Category]= '" & CategorySelected & _
+    If Not (IsNull(DLookup("RecordID", WarehouseQuery, "[Category]= '" & searchCategory & _
         "' AND [RecordID]='" & RecordID & "'"))) Then
         ValidRecordID = True
     Else
@@ -298,7 +305,7 @@ Private Function GetRecordItemID(RecordID As String) As Long
 
     Dim ItemID As Long
 
-    ItemID = DLookup("ID", WarehouseQuery, "[Category]= '" & CategorySelected & _
+    ItemID = DLookup("ID", WarehouseQuery, "[Category]= '" & searchCategory & _
         "' AND [RecordID]='" & RecordID & "'")
     If Not (IsNull(ItemID)) Then
         GetRecordItemID = ItemID
