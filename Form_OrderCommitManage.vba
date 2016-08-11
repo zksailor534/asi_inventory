@@ -26,28 +26,33 @@ On Error GoTo Form_Load_Err
         GoTo Form_Load_Exit
     End If
 
-    SetVisibility
-
     ' Open recordsets
     open_db
     Set rstCommit = db.OpenRecordset("SELECT * FROM " & CommitQuery & " WHERE [CommitID] = " & CurrentCommitID)
 
     ' Check for valid commit status
-    If (rstCommit!Status <> "A") And (rstCommit!Status <> "X") And (rstCommit!Status <> "C") Then
-        MsgBox "Commit status is invalid:" & vbCrLf & "Commit Status must be 'A', 'X', or 'C'" _
+    If (rstCommit!Status <> "A") And (rstCommit!Status <> "X") And (rstCommit!Status <> "P") And (rstCommit!Status <> "C") Then
+        MsgBox "Commit status is invalid:" & vbCrLf & "Commit Status must be 'A', 'X', 'P', or 'C'" _
             , vbOKOnly, "Invalid Commit Status"
         DoCmd.Close
         GoTo Form_Load_Exit
     End If
 
+    ' By default, location adjust check is false (not checked)
+    LocAdjustCheck.Value = False
+    Location.Enabled = False
+    Location.Locked = True
+    Utilities.FieldAvailableRemove Me.Controls("Location")
+
     ' By default, quantity adjust check is false (not checked)
     QtyAdjustCheck.Value = False
-    NewQuantity.Enabled = False
-    NewQuantity.Locked = True
-    Utilities.FieldAvailableRemove Me.Controls("NewQuantity")
+    OnHand.Enabled = False
+    OnHand.Locked = True
+    Utilities.FieldAvailableRemove Me.Controls("OnHand")
 
+    ' Populate fields
     FillFields
-
+    SetVisibility
     SetTitleStatus
 
 Form_Load_Exit:
@@ -184,75 +189,129 @@ End Sub
 
 
 '------------------------------------------------------------
-' cmdDelete_Click
+' cmdCancel_Click
 '
 '------------------------------------------------------------
-Private Sub cmdDelete_Click()
-On Error GoTo cmdDelete_Click_Err
+Private Sub cmdCancel_Click()
+On Error GoTo cmdCancel_Click_Err
 
     Dim success As Boolean
 
     ' Check for valid user
     If (EmployeeLogin = "") Then
-        GoTo cmdDelete_User_Err
+        GoTo cmdCancel_User_Err
     ElseIf (EmployeeRole = SalesLevel) And (rstCommit!OperatorActive <> EmployeeLogin) Then
-        GoTo cmdDelete_User_Err
+        GoTo cmdCancel_User_Err
     End If
 
-    ' Check if on hand quantity adjustment is valid
-    If (QtyAdjustCheck.Value = True) Then
-        If (CLng(NewQuantity) >= (rstCommit!Committed - rstCommit!QtyCommitted)) Then
-            Utilities.OperationEntry rstCommit!ID, "Inventory", _
-                "Changed OnHand from " & rstCommit!OnHand & " to " & NewQuantity & _
-                    " after Commit " & CurrentCommitID & " Deletion"
-        Else
-            GoTo cmdDelete_QtyAdjust_Err
-        End If
-    End If
-
-    ' Delete commit
+    ' Cancel commit
     success = Utilities.Commit_Cancel(rstCommit)
     If Not (success) Then
-        GoTo cmdDelete_Delete_Err
+        GoTo cmdCancel_Err
+    Else
+        Utilities.OperationEntry rstCommit!ID, "Commit", _
+            "Cancelled Commitment " & CurrentCommitID & " from Sales Order " & CurrentSalesOrder
     End If
 
     ' Adjust quantity if called for
-    If (QtyAdjustCheck.Value = True) Then
+    If (QtyAdjustCheck.Value = True) Or (LocAdjustCheck.Value = True) Then
         With rstCommit
             .Edit
-            !OnHand = NewQuantity
-            !LastOper = EmployeeLogin
-            !LastDate = Now()
+
+            ' Adjust Location if different
+            If (Location <> !Location) Then
+                Utilities.OperationEntry rstCommit!ID, "Inventory", _
+                    "Changed Location from " & rstCommit!Location & " to " & Location & _
+                    " after Commit " & CurrentCommitID & " Cancellation", "Move"
+                !Location = Location
+                !LastOper = EmployeeLogin
+                !LastDate = Now()
+            End If
+
+            ' Adjust Quantity if different
+            If (OnHand <> !OnHand) Then
+                Utilities.OperationEntry rstCommit!ID, "Inventory", _
+                    "Changed OnHand from " & rstCommit!OnHand & " to " & OnHand & _
+                    " after Commit " & CurrentCommitID & " Cancellation", "Count"
+                !OnHand = OnHand
+                !LastOper = EmployeeLogin
+                !LastDate = Now()
+            End If
+
             .Update
         End With
     End If
 
-    GoTo cmdDelete_Success
+    GoTo cmdCancel_Success
 
-cmdDelete_Click_Exit:
+cmdCancel_Click_Exit:
     DoCmd.Close
     Exit Sub
 
-cmdDelete_Click_Err:
+cmdCancel_Click_Err:
     MsgBox "Error: (" & Err.Number & ") " & Err.Description, vbCritical
-    Resume cmdDelete_Click_Exit
+    Resume cmdCancel_Click_Exit
 
-cmdDelete_Success:
-    MsgBox "Successful Removal:" & vbCrLf & _
+cmdCancel_Success:
+    MsgBox "Successful Cancellation:" & vbCrLf & _
         "Commit " & CurrentCommitID & " for Sales Order " & SalesOrder, vbOKOnly, "Success"
-    GoTo cmdDelete_Click_Exit
+    GoTo cmdCancel_Click_Exit
 
-cmdDelete_User_Err:
-    MsgBox "Error: User is invalid" & vbCrLf & "Login as valid user", vbOKOnly, "Unable to Delete"
+cmdCancel_User_Err:
+    MsgBox "Error: User is invalid" & vbCrLf & "Login as valid user", vbOKOnly, "Unable to Cancel"
     Exit Sub
 
-cmdDelete_QtyAdjust_Err:
-    MsgBox "Error: Unable is Adjust Quantity" & vbCrLf & "New quantity must be greater than Committed Quantity" _
-        , vbOKOnly, "Unable to Adjust Quantity"
+cmdCancel_Err:
+    MsgBox "Error: Unable to Cancel Commitment", vbOKOnly, "Unable to Cancel"
     Exit Sub
 
-cmdDelete_Delete_Err:
-    MsgBox "Error: Unable to Delete", vbOKOnly, "Unable to Delete"
+End Sub
+
+
+'------------------------------------------------------------
+' cmdActive_Click
+'
+'------------------------------------------------------------
+Private Sub cmdActive_Click()
+On Error GoTo cmdActive_Click_Err
+
+    Dim success As Boolean
+
+    ' Check for valid user
+    If (EmployeeLogin = "") Or (EmployeeRole = SalesLevel) Then
+        GoTo cmdActive_User_Err
+    End If
+
+    ' Reactivate committed item
+    success = Utilities.Commit_Reactivate(rstCommit)
+    If Not (success) Then
+        GoTo cmdActive_Err
+    Else
+        Utilities.OperationEntry rstCommit!ID, "Commit", _
+            "Reactivated Commitment " & CurrentCommitID & " from Sales Order " & CurrentSalesOrder
+    End If
+
+    GoTo cmdActive_Success
+
+cmdActive_Click_Exit:
+    DoCmd.Close
+    Exit Sub
+
+cmdActive_Click_Err:
+    MsgBox "Error: (" & Err.Number & ") " & Err.Description, vbCritical
+    Resume cmdActive_Click_Exit
+
+cmdActive_Success:
+    MsgBox "Successfully Reactivated Item Commitment:" & vbCrLf & _
+        "Commit " & CurrentCommitID & " for Sales Order " & SalesOrder, vbOKOnly, "Success"
+    GoTo cmdActive_Click_Exit
+
+cmdActive_User_Err:
+    MsgBox "Error: User is invalid" & vbCrLf & "Login as valid user", vbOKOnly, "Unable to Save"
+    Exit Sub
+
+cmdActive_Err:
+    MsgBox "Error: Unable to Reactivate Commitment", vbOKOnly, "Unable to Reactivate"
     Exit Sub
 
 End Sub

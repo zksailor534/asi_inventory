@@ -923,8 +923,64 @@ End Function
 
 
 '------------------------------------------------------------
-' Commit_Complete
+' Commit_Reactivate
 '
+'------------------------------------------------------------
+Public Function Commit_Reactivate(ByRef rst As DAO.Recordset) As Boolean
+    On Error GoTo Commit_Reactivate_Err
+
+    rst.MoveFirst
+    Do While Not rst.EOF
+        If (rst!Status = "A") Then
+            GoTo Status_Err
+        ElseIf (rst!Status = "C") Then
+            With rst
+                .Edit
+                !DateComplete = Null
+                !Status = "A"
+                !OperatorComplete = ""
+                !Committed = !Committed + !QtyCommitted
+                !OnHand = !OnHand + !QtyCommitted
+                !LastOper = EmployeeLogin
+                !LastDate = Now()
+                .Update
+            End With
+        ElseIf (rst!Status = "X") Then
+            With rst
+                .Edit
+                !DateCancel = Null
+                !Status = "A"
+                !OperatorCancel = ""
+                !Committed = !Committed + !QtyCommitted
+                !LastOper = EmployeeLogin
+                !LastDate = Now()
+                .Update
+            End With
+        End If
+        rst.MoveNext
+    Loop
+    Commit_Reactivate = True
+    rst.MoveFirst
+
+Commit_Reactivate_Exit:
+    Exit Function
+
+Commit_Reactivate_Err:
+    MsgBox "Error: (" & Err.Number & ") " & Err.Description, vbCritical
+    Commit_Reactivate = False
+    GoTo Commit_Reactivate_Exit
+
+Status_Err:
+    MsgBox "Error: " & vbCrLf & "Cannot Reactivate Commitment " & rst!ID & vbCrLf & _
+        "Commit must be not be active", , "Status Error"
+    Commit_Reactivate = False
+    GoTo Commit_Reactivate_Exit
+
+End Function
+
+
+'------------------------------------------------------------
+' Commit_Complete
 '------------------------------------------------------------
 Public Function Commit_Complete(ByRef rst As DAO.Recordset) As Boolean
     On Error GoTo Commit_Complete_Err
