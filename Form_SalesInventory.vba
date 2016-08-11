@@ -40,6 +40,7 @@ Private Sub Form_Open(Cancel As Integer)
 
     ' Engage filter from category selection
     searchCategory = CategorySelected
+
     subForm.Filter = "[Category]= '" & searchCategory & "' AND [OnHand] > 0"
     subForm.FilterOn = True
 
@@ -230,8 +231,8 @@ Private Sub SetColumnVisibility()
     ' Set Warehouse column sizes
     subForm.Location.ColumnWidth = -2
     subForm.RecordID.ColumnWidth = 900
-    subForm.OnHand.ColumnWidth = 550
-    subForm.Available.ColumnWidth = 550
+    subForm.OnHand.ColumnWidth = 700
+    subForm.Available.ColumnWidth = 700
 
     ' Set Warehouse column visibility
     subForm.Location.ColumnHidden = False
