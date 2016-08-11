@@ -3,9 +3,6 @@ Option Compare Database
 Private rstItem As DAO.Recordset
 Private rstNewInventory As DAO.Recordset
 
-Private Sub AmpHR_BeforeUpdate(Cancel As Integer)
-
-End Sub
 
 '------------------------------------------------------------
 ' Form_Load
@@ -98,6 +95,22 @@ End Sub
 
 
 '------------------------------------------------------------
+' cmdBrowse_Click
+'
+'------------------------------------------------------------
+Private Sub cmdBrowse_Click()
+    Dim strChoice As String
+    strChoice = FileSelection
+    If Len(strChoice) > 0 Then
+        ImagePath = strChoice
+        DisplayImage (ImagePath)
+    Else
+        ImagePath = ""
+    End If
+End Sub
+
+
+'------------------------------------------------------------
 ' Category_AfterUpdate
 '
 '------------------------------------------------------------
@@ -107,6 +120,7 @@ Private Sub Category_AfterUpdate()
         updateReservedRecordIDs
         updateProductList
         updateManufacturerList
+        updateVendorList
     End If
 End Sub
 
@@ -125,33 +139,6 @@ End Sub
 
 
 '------------------------------------------------------------
-' cmdNewProduct_Click
-'
-'------------------------------------------------------------
-'Private Sub cmdNewProduct_Click()
-'On Error GoTo cmdNewProduct_Click_Err
-'
-'    On Error GoTo 0
-'    TempVars.Remove "Suppliers_ID"
-'    DoCmd.OpenForm "SupplierDetails", acNormal, "", "", acAdd, acDialog
-'    DoCmd.Requery "SupplierID"
-'    If (Not (IsNull(TempVars!Suppliers_ID))) Then
-'        DoCmd.SetProperty "SupplierID", , TempVars!Suppliers_ID
-'    End If
-'    TempVars.Remove "Suppliers_ID"
-'
-'
-'cmdNewSupplier_Click_Exit:
-'    Exit Sub
-'
-'cmdNewSupplier_Click_Err:
-'    MsgBox "Error: (" & Err.Number & ") " & Err.Description, vbCritical
-'    Resume cmdNewSupplier_Click_Exit
-'
-'End Sub
-
-
-'------------------------------------------------------------
 ' updateProductList
 ' Update Product Combo box with all products in category
 '------------------------------------------------------------
@@ -161,8 +148,8 @@ Private Sub updateProductList()
 
     CategoryID = Utilities.GetCategoryID(Category)
     If (CategoryID <> 0) Then
-        sqlQuery = "SELECT ProductName FROM " & ProductQuery & " WHERE Category.Value = " & CategoryID & _
-            " ORDER BY ProductName"
+        sqlQuery = "SELECT ProductName FROM " & ProductQuery & " WHERE Products.Category.Value = " & CategoryID & _
+            " ORDER BY ProductName;"
         Product.RowSource = sqlQuery
     End If
 End Sub
@@ -218,6 +205,24 @@ Private Sub updateManufacturerList()
         Manufacturer.RowSource = sqlQuery
     Else
         Manufacturer.RowSource = ""
+    End If
+End Sub
+
+
+'------------------------------------------------------------
+' updateVendorList
+' Update Vendor Combo box with all Vendors of category
+'------------------------------------------------------------
+Private Sub updateVendorList()
+    Dim sqlQuery As String
+
+    If (Category <> "") Then
+        sqlQuery = "SELECT DISTINCT Vendor FROM " & ItemDB & _
+            " WHERE Category = '" & Category & "' AND Vendor <> ''" & _
+            " ORDER BY Vendor;"
+        Vendor.RowSource = sqlQuery
+    Else
+        Vendor.RowSource = ""
     End If
 End Sub
 
@@ -298,7 +303,12 @@ Private Function ValidateFields() As Boolean
     End If
 
     ' Check for valid Quantity
-    If (Quantity = "") Or Not (IsNumeric(Quantity)) Or CLng(Quantity) <= 0 Then
+    If (Quantity = "") Or IsNull(Quantity) Then
+        Debug.Print 1
+        Utilities.FieldErrorSet Me.Controls("Quantity")
+        ValidateFields = False
+    ElseIf Not (IsNumeric(Quantity)) Or CLng(Quantity) <= 0 Then
+        Debug.Print 2
         Utilities.FieldErrorSet Me.Controls("Quantity")
         ValidateFields = False
     Else
@@ -413,13 +423,14 @@ On Error GoTo SaveNewItem_Err
             !SuggSellingPrice = CCur(SuggSellingPrice)
         End If
 
+        !Focus = Focus
+        !ImagePath = ImagePath
         !Capacity = Capacity
         !BoltPattern = BoltPattern
         !HolePattern = HolePattern
         !Diameter = Diameter
         !Degree = Degree
         !DriveType = DriveType
-        !Gauge = Gauge
         !NumStruts = NumStruts
         !NumSteps = NumSteps
         !Volts = Volts
@@ -504,13 +515,14 @@ On Error GoTo SaveReservedItem_Err
             !SuggSellingPrice = CCur(SuggSellingPrice)
         End If
 
+        !Focus = Focus
+        !ImagePath = ImagePath
         !Capacity = Capacity
         !BoltPattern = BoltPattern
         !HolePattern = HolePattern
         !Diameter = Diameter
         !Degree = Degree
         !DriveType = DriveType
-        !Gauge = Gauge
         !NumStruts = NumStruts
         !NumSteps = NumSteps
         !Volts = Volts
@@ -573,6 +585,8 @@ End Sub
 Private Sub ClearFields()
 
     Product = ""
+    ProductNameHeader = ""
+    ItemID = ""
     RecordID = ""
     Prefix = ""
     Category = ""
@@ -582,6 +596,9 @@ Private Sub ClearFields()
     Color = ""
     Condition = ""
     Vendor = ""
+    Focus = No
+    ImagePath = ""
+    Image.Picture = ""
     Description = ""
     ItemLength = ""
     ItemWidth = ""
@@ -599,7 +616,6 @@ Private Sub ClearFields()
     AmpHR = ""
     Phase = ""
     Serial = ""
-    Gauge = ""
     NumSteps = ""
     LowerLiftHeight = ""
     NumStruts = ""
@@ -609,4 +625,31 @@ Private Sub ClearFields()
     Location = ""
     Quantity = ""
 
+End Sub
+
+
+'------------------------------------------------------------
+' FileSelection
+'
+'------------------------------------------------------------
+Private Function FileSelection() As String
+    Dim objFD As Object
+    Dim strOut As String
+
+    strOut = vbNullString
+    Set objFD = Application.FileDialog(msoFileDialogFilePicker)
+    If objFD.Show = -1 Then
+        strOut = objFD.SelectedItems(1)
+    End If
+    Set objFD = Nothing
+    FileSelection = strOut
+End Function
+
+
+'------------------------------------------------------------
+' DisplayImage
+'
+'------------------------------------------------------------
+Private Sub DisplayImage(path As String)
+    Image.Picture = path
 End Sub
