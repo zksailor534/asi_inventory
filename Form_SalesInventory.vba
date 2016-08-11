@@ -33,8 +33,12 @@ Private Sub Form_Open(Cancel As Integer)
     subForm.Controls("LastOper").ColumnHidden = True
     subForm.Controls("LastDate").ColumnHidden = True
 
+    ' Default Stock Selected combobox to On Hand
+    Me.StockSelected.Value = "On Hand"
+    subForm.Controls("OnOrder").ColumnHidden = True
+
     ' Engage filter from category selection
-    subForm.Filter = "[Category] LIKE '" & CategorySelected & "'"
+    subForm.Filter = "[Category]= '" & CategorySelected & "' AND [OnHand] > 0"
     subForm.FilterOn = True
 
     ' Set column visibility
@@ -58,7 +62,7 @@ Private Sub CategorySelected_AfterUpdate()
     Set subForm = sbfrmInvSearch.Form
 
     ' Engage filter from category selection
-    subForm.Filter = "[Category]= '" & CategorySelected & "'"
+    subForm.Filter = "[Category]= '" & CategorySelected & "' AND [OnHand] > 0"
     subForm.FilterOn = True
 
     SetColumnVisibility
@@ -66,6 +70,26 @@ Private Sub CategorySelected_AfterUpdate()
 outNow:
     CategorySelected.SetFocus
 
+End Sub
+
+
+'------------------------------------------------------------
+' StockSelected_AfterUpdate
+'
+'------------------------------------------------------------
+Private Sub StockSelected_AfterUpdate()
+    If (StockSelected.Value = "On Hand") Then
+        Me.sbfrmInvSearch.Form.Filter = "[Category]= '" & CategorySelected & "' AND [OnHand] > 0"
+        Me.sbfrmInvSearch.Form.FilterOn = True
+        Me.sbfrmInvSearch.Form.Controls("OnOrder").ColumnHidden = True
+        Me.sbfrmInvSearch.Form.Requery
+    ElseIf (StockSelected.Value = "Inbound") Then
+        Me.sbfrmInvSearch.Form.Filter = "[OnOrder] > 0"
+        Me.sbfrmInvSearch.Form.FilterOn = True
+        Me.sbfrmInvSearch.Form.Controls("OnOrder").ColumnHidden = False
+        Me.sbfrmInvSearch.Form.Controls("OnOrder").ColumnOrder = 5
+        Me.sbfrmInvSearch.Form.Requery
+    End If
 End Sub
 
 
@@ -90,54 +114,23 @@ End Sub
 '
 '------------------------------------------------------------
 Private Sub PrintButton_Click()
+    On Error GoTo PrintButton_ErrHandler
 
-    Dim subForm As Access.Form
-    Dim keyStr As String
-    Dim recSet As DAO.Recordset
-    Dim numRecs As Long
-    Dim idx As Long
-
-    Set subForm = sbfrmInvSearch.Form
     PrintCategorySelected = CategorySelected
-
-    ' Capture records
-    numRecs = subForm.DSSelHeight
-    If numRecs < 1 Then
-        MsgBox "Please select a Range of records.", vbOKOnly, "Error,Error"
-        GoTo outNow
-    End If
-
-    Set recSet = subForm.RecordsetClone
-
-    ' Walk through each selected record to retrieve the primary key.
-    keyStr = ""
-    For idx = 1 To numRecs
-        keyStr = keyStr & "ID = " & subForm.ID.Value & " or "
-
-        recSet.Bookmark = subForm.Bookmark
-        recSet.MoveNext
-
-        If (Not (recSet.EOF)) Then
-            subForm.Bookmark = recSet.Bookmark
-        End If
-    Next idx
-
-    ' Remove the trailing or
-    keyStr = Left$(keyStr, Len(keyStr) - 3)
+    PrintFilter = sbfrmInvSearch.Form.Filter
 
     ' Open PrintRange form
-    DoCmd.OpenForm PrintRangeForm, acFormDS, , keyStr, , acWindowNormal
+    DoCmd.OpenForm PrintRangeForm, acFormDS, , , , , acWindowNormal
 
-CleanUp:
-    Set recSet = Nothing
+PrintButton_Exit:
+    PrintFilter = ""
+    PrintCategorySelected = ""
     Exit Sub
 
-ErrHandler:
+PrintButton_ErrHandler:
     MsgBox "Error in SelRecsBtn_Click( ) in" & vbCrLf & Me.Name & " form." & vbCrLf & vbCrLf & "Error #" & Err.Number & vbCrLf & vbCrLf & Err.Description
     Err.Clear
-    GoTo CleanUp
-
-outNow:
+    GoTo PrintButton_Exit
 
 End Sub
 
@@ -148,8 +141,8 @@ End Sub
 '------------------------------------------------------------
 Private Sub SplitScreenButton_Click()
     If (Utilities.HasParent(Me)) Then
-        If (Me.Parent.Name = InventoryForm) Then
-            Me.Parent!nvbSearch.NavigationTargetName = "InventorySplitSearch"
+        If (Me.Parent.Name = SalesForm) Then
+            Me.Parent!nvbSearch.NavigationTargetName = SalesSearchSplit
             Me.Parent!nvbSearch.SetFocus
             SendKeys "{ENTER}", 0
         Else
