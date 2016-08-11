@@ -874,9 +874,10 @@ Public Function Commit_Cancel(rst As DAO.Recordset) As Boolean
     rst.MoveFirst
     Do While Not rst.EOF
         If (rst!Status = "A") Then
-            ' Check existing available quantity
-            If (rst!OnHand < 0) Or (rst!OnHand < rst!Committed) Then
+            ' Flag invalid inventory quantities
+            If (rst!OnHand < 0) Or (rst!OnOrder < 0) Then
                 GoTo Quantity_Err
+            ' Flag invalid commit quantities
             ElseIf (rst!Committed <= 0) Or (rst!QtyCommitted <= 0) Then
                 GoTo Quantity_Err
             End If
@@ -908,13 +909,13 @@ Commit_Cancel_Err:
     GoTo Commit_Cancel_Exit
 
 Status_Err:
-    MsgBox "Error: " & vbCrLf & "Cannot Delete Commit " & rst!ID & vbCrLf & _
-        "Commit must be active", , "Status Error"
+    MsgBox "Error: " & vbCrLf & "Cannot Cancel Commit " & rst!ID & vbCrLf & _
+        "Commit must be Active", , "Status Error"
     Commit_Cancel = False
     GoTo Commit_Cancel_Exit
 
 Quantity_Err:
-    MsgBox "Error: " & vbCrLf & "Cannot Delete Commit " & rst!ID & vbCrLf & _
+    MsgBox "Error: " & vbCrLf & "Cannot Cancel Commit " & rst!ID & vbCrLf & _
         "Commit Quantity or Item Available Quantity are invalid", , "Quantity Error"
     Commit_Cancel = False
     GoTo Commit_Cancel_Exit
@@ -1028,7 +1029,7 @@ Commit_Complete_Err:
 
 Status_Err:
     MsgBox "Error: " & vbCrLf & "Cannot Complete Commit " & rst!ID & vbCrLf & _
-        "Commit must be active", , "Status Error"
+        "Commit must be Active", , "Status Error"
     Commit_Complete = False
     GoTo Commit_Complete_Exit
 

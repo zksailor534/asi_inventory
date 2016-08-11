@@ -68,6 +68,7 @@ On Error GoTo cmdSave_Click_Err
         GoTo cmdSave_Click_Exit
     End If
     MsgBox "Item Successfully Saved!", , "Save Complete"
+    FillFields
 
 cmdSave_Click_Exit:
     Exit Sub
@@ -108,6 +109,13 @@ End Sub
 '------------------------------------------------------------
 Private Function ValidateFields() As Boolean
 
+    Dim IsChangedLocation As Boolean
+    Dim IsChangedOnHand As Boolean
+    Dim IsChangedOnOrder As Boolean
+
+    IsChangedLocation = False
+    IsChangedOnHand = False
+    IsChangedOnOrder = False
     ValidateFields = True
 
     ' Check for valid user
@@ -117,40 +125,66 @@ Private Function ValidateFields() As Boolean
         GoTo ExitNow
     End If
 
-    ' Check if anything has changed
-    If (Location = rstInventory!Location) And CLng(OnHand) = rstInventory!OnHand And _
-        CLng(OnOrder) = rstInventory!OnOrder Then
-        MsgBox "Invalid Save:" & vbCrLf & "Nothing has changed", vbOKOnly, "Invalid Save"
+    ' Check if Location has changed
+    If Location = rstInventory!Location Then
         Utilities.FieldErrorClear Me.Controls("Location")
+    Else
+        IsChangedLocation = True
+    End If
+
+    ' Check if OnHand has changed
+    If CLng(OnHand) = rstInventory!OnHand Then
         Utilities.FieldErrorClear Me.Controls("OnHand")
+    Else
+        IsChangedOnHand = True
+    End If
+
+    ' Check if OnOrder has changed
+    If CLng(OnOrder) = rstInventory!OnOrder Then
         Utilities.FieldErrorClear Me.Controls("OnOrder")
+    Else
+        IsChangedOnOrder = True
+    End If
+
+    ' Exit if nothing has changed
+    If IsChangedLocation = False And _
+        IsChangedOnHand = False And _
+        IsChangedOnOrder = False Then
+        MsgBox "Invalid Save:" & vbCrLf & "Nothing has changed", vbOKOnly, "Invalid Save"
         ValidateFields = False
         GoTo ExitNow
     End If
 
     ' Check for valid Location
-    If (Location = "") Then
-        Utilities.FieldErrorSet Me.Controls("Location")
-        ValidateFields = False
-    Else
-        Utilities.FieldErrorClear Me.Controls("Location")
+    If (IsChangedLocation = True) Then
+        If (Location = "") Then
+            Utilities.FieldErrorSet Me.Controls("Location")
+            ValidateFields = False
+        Else
+            Utilities.FieldErrorClear Me.Controls("Location")
+        End If
     End If
 
     ' Check for valid On Hand Quantity
-    If (OnHand = "") Or Not (IsNumeric(OnHand)) Or _
-        CLng(OnHand) < CLng(Committed) Then
-        Utilities.FieldErrorSet Me.Controls("OnHand")
-        ValidateFields = False
-    Else
-        Utilities.FieldErrorClear Me.Controls("OnHand")
+    If (IsChangedOnHand = True) Then
+        If (OnHand = "") Or Not (IsNumeric(OnHand)) Or _
+            (CLng(OnHand) + CLng(OnOrder)) < CLng(Committed) Then
+            Utilities.FieldErrorSet Me.Controls("OnHand")
+            ValidateFields = False
+        Else
+            Utilities.FieldErrorClear Me.Controls("OnHand")
+        End If
     End If
 
     ' Check for valid On Order Quantity
-    If (OnOrder = "") Or Not (IsNumeric(OnOrder)) Or CLng(OnOrder) < 0 Then
-        Utilities.FieldErrorSet Me.Controls("OnOrder")
-        ValidateFields = False
-    Else
-        Utilities.FieldErrorClear Me.Controls("OnOrder")
+    If (IsChangedOnOrder = True) Then
+        If (OnOrder = "") Or Not (IsNumeric(OnOrder)) Or CLng(OnOrder) < 0 Or _
+            (CLng(OnHand) + CLng(OnOrder)) < CLng(Committed) Then
+            Utilities.FieldErrorSet Me.Controls("OnOrder")
+            ValidateFields = False
+        Else
+            Utilities.FieldErrorClear Me.Controls("OnOrder")
+        End If
     End If
 
 ExitNow:
