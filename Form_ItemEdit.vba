@@ -27,7 +27,7 @@ On Error GoTo Form_Load_Err
 
     ' Open the recordset
     open_db
-    Set rstItem = db.OpenRecordset("SELECT TOP 1 * FROM " & ItemDB & " WHERE [ID] = " & CurrentItemID)
+    Set rstItem = db.OpenRecordset("SELECT TOP 1 * FROM " & ItemDB & " WHERE [ID]=" & CurrentItemID)
 
     FillFields
 
@@ -97,6 +97,22 @@ On Error GoTo cmdClose_Click_Err
 cmdClose_Click_Err:
     MsgBox "Error: (" & Err.Number & ") " & Err.Description, vbCritical
 
+End Sub
+
+
+'------------------------------------------------------------
+' cmdBrowse_Click
+'
+'------------------------------------------------------------
+Private Sub cmdBrowse_Click()
+    Dim strChoice As String
+    strChoice = FileSelection
+    If Len(strChoice) > 0 Then
+        ImagePath = strChoice
+        DisplayImage (ImagePath)
+    Else
+        ImagePath = ""
+    End If
 End Sub
 
 
@@ -214,14 +230,20 @@ Private Sub FillFields()
         updateManufacturerList
     End If
 
+    Prefix = Nz(Utilities.GetRecordPrefix(rstItem!RecordID), "")
     RecordID = Nz(rstItem!RecordID, "")
-    Manufacturer = Nz(rstItem!Manufacturer, "")
     Style = Nz(rstItem!Style, "")
+    Manufacturer = Nz(rstItem!Manufacturer, "")
     SuggSellingPrice = Nz(rstItem!SuggSellingPrice, "")
+    Focus = Nz(rstItem!Focus, "")
     Color = Nz(rstItem!Color, "")
     Condition = Nz(rstItem!Condition, "")
     Vendor = Nz(rstItem!Vendor, "")
     Description = Nz(rstItem!Description, "")
+
+    ImagePath = Nz(rstItem!ImagePath, "")
+    DisplayImage Nz(rstItem!ImagePath, "")
+
     ItemLength = Nz(rstItem!ItemLength, "")
     ItemWidth = Nz(rstItem!ItemWidth, "")
     ItemHeight = Nz(rstItem!ItemHeight, "")
@@ -238,14 +260,20 @@ Private Sub FillFields()
     AmpHR = Nz(rstItem!AmpHR, "")
     Phase = Nz(rstItem!Phase, "")
     Serial = Nz(rstItem!Serial, "")
-    Gauge = Nz(rstItem!Gauge, "")
     NumSteps = Nz(rstItem!NumSteps, "")
     LowerLiftHeight = Nz(rstItem!LowerLiftHeight, "")
     NumStruts = Nz(rstItem!NumStruts, "")
     QtyDoors = Nz(rstItem!QtyDoors, "")
     TopStepHeight = Nz(rstItem!TopStepHeight, "")
     TopLiftHeight = Nz(rstItem!TopLiftHeight, "")
-    CreateOper = Nz(rstItem!CreateOper, "")
+    If Not IsNull(rstItem!CreateOper) Then
+        empID = Utilities.GetEmployeeID(rstItem!CreateOper)
+        If (empID <> 0) Then
+            CreateOper = Utilities.GetEmployeeName(empID)
+        Else
+            CreateOper = Nz(rstItem!CreateOper, "")
+        End If
+    End If
     CreateDate = Nz(rstItem!CreateDate, "")
 
     ' Last change user or create user
@@ -271,6 +299,7 @@ Private Sub FillFields()
     ElseIf rstItem!CreateDate <> 0 Then
         LastDate = Nz(rstItem!CreateDate)
     End If
+
 End Sub
 
 
@@ -399,13 +428,14 @@ Private Sub SaveItem()
             !SuggSellingPrice = CCur(SuggSellingPrice)
         End If
 
+        !Focus = Focus
+        !ImagePath = ImagePath
         !Capacity = Capacity
         !BoltPattern = BoltPattern
         !HolePattern = HolePattern
         !Diameter = Diameter
         !Degree = Degree
         !DriveType = DriveType
-        !Gauge = Gauge
         !NumStruts = NumStruts
         !NumSteps = NumSteps
         !Volts = Volts
@@ -420,4 +450,31 @@ Private Sub SaveItem()
         !LastChangeOper = EmployeeLogin
         .Update
     End With
+End Sub
+
+
+'------------------------------------------------------------
+' FileSelection
+'
+'------------------------------------------------------------
+Private Function FileSelection() As String
+    Dim objFD As Object
+    Dim strOut As String
+
+    strOut = vbNullString
+    Set objFD = Application.FileDialog(msoFileDialogFilePicker)
+    If objFD.Show = -1 Then
+        strOut = objFD.SelectedItems(1)
+    End If
+    Set objFD = Nothing
+    FileSelection = strOut
+End Function
+
+
+'------------------------------------------------------------
+' DisplayImage
+'
+'------------------------------------------------------------
+Private Sub DisplayImage(path As String)
+    Image.Picture = path
 End Sub

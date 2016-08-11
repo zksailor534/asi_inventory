@@ -42,9 +42,9 @@ Private Sub Form_Open(Cancel As Integer)
     subForm2.Controls("LastDate").ColumnHidden = True
 
     ' Engage filter from category selection
-    subForm1.Filter = "[Category]= '" & CategorySelectedTop & "' AND [Available] > 0"
+    subForm1.Filter = "[Category]= '" & CategorySelectedTop & "' AND [OnHand] > 0"
     subForm1.FilterOn = True
-    subForm2.Filter = "[Category]= '" & CategorySelectedBottom & "' AND [Available] > 0"
+    subForm2.Filter = "[Category]= '" & CategorySelectedBottom & "' AND [OnHand] > 0"
     subForm2.FilterOn = True
 
     ' Set column visibility
@@ -66,7 +66,7 @@ Private Sub CategorySelectedTop_AfterUpdate()
     Set subForm = sbfrmInvSearch.Form
 
     ' Engage filter from category selection
-    subForm.Filter = "[Category]= '" & CategorySelectedTop & "' AND [Available] > 0"
+    subForm.Filter = "[Category]= '" & CategorySelectedTop & "' AND [OnHand] > 0"
     subForm.FilterOn = True
 
     SetColumnVisibility
@@ -87,7 +87,7 @@ Private Sub CategorySelectedBottom_AfterUpdate()
     Set subForm = sbfrmInvSearchBottom.Form
 
     ' Engage filter from category selection
-    subForm.Filter = "[Category]= '" & CategorySelectedBottom & "' AND [Available] > 0"
+    subForm.Filter = "[Category]= '" & CategorySelectedBottom & "' AND [OnHand] > 0"
     subForm.FilterOn = True
 
     SetColumnVisibility
