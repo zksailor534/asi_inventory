@@ -997,9 +997,7 @@ Public Function RecordIDReserve(ID As String, Category As String) As Boolean
     Set rst = db.OpenRecordset(ItemDB)
 
     ' Check to make sure that Record ID doesn't exist
-    Debug.Print DLookup("RecordID", ItemDB, "[RecordID]='" & ID & "'")
     If IsNull(DLookup("RecordID", ItemDB, "[RecordID]='" & ID & "'")) Then
-        Debug.Print ID
         ' Proceed to reserve Record ID
         With rst
             .AddNew
