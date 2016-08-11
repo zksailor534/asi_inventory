@@ -84,8 +84,7 @@ End Sub
 '
 '------------------------------------------------------------
 Private Sub ActiveToggle_Click()
-    Me.sbfrmOrderSearch.Form.Filter = GetFilter(EmployeeRole, SalesOrderFiltered)
-    Me.sbfrmOrderSearch.Form.FilterOn = True
+    Me.sbfrmOrderSearch.Form.FilterOn = False
 
     If (ActiveToggle.Value = True) Then
         Me.sbfrmOrderSearch.Form.Controls("Status").ColumnHidden = True
@@ -93,6 +92,8 @@ Private Sub ActiveToggle_Click()
         Me.sbfrmOrderSearch.Form.Controls("Status").ColumnHidden = False
     End If
 
+    Me.sbfrmOrderSearch.Form.Filter = GetFilter(EmployeeRole, SalesOrderFiltered)
+    Me.sbfrmOrderSearch.Form.FilterOn = True
     Me.sbfrmOrderSearch.Form.Requery
 End Sub
 
@@ -120,15 +121,15 @@ End Sub
 
 
 '------------------------------------------------------------
-' DeleteCommitButton_Click
+' CancelCommitButton_Click
 '
 '------------------------------------------------------------
-Private Sub DeleteCommitButton_Click()
+Private Sub CancelCommitButton_Click()
     Dim rstCommit As DAO.Recordset
     Dim decommitAll As Integer
 
 
-    If EmployeeLogin <> SalesOrderUser(CurrentSalesOrder) Then
+    If (EmployeeRole = SalesLevel) And (EmployeeLogin <> SalesOrderUser(CurrentSalesOrder)) Then
         MsgBox "Invalid User:" & vbCrLf & "Unable to edit Commit of other user", , "Invalid User"
         Exit Sub
     End If

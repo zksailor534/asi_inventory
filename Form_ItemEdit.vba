@@ -101,18 +101,29 @@ End Sub
 
 
 '------------------------------------------------------------
+' cmdNewRecordID_Click
+'
+'------------------------------------------------------------
+Private Sub cmdNewRecordID_Click()
+    If (Prefix <> "") Then
+        Prefix = UCase(Prefix)
+        RecordID = Utilities.NewRecordID(Prefix, 1)
+    Else
+        MsgBox "No Record ID Prefix Provided.", vbOKOnly
+    End If
+End Sub
+
+
+'------------------------------------------------------------
 ' cmdBrowse_Click
 '
 '------------------------------------------------------------
 Private Sub cmdBrowse_Click()
     Dim strChoice As String
+
     strChoice = FileSelection
-    If Len(strChoice) > 0 Then
-        ImagePath = strChoice
-        DisplayImage (ImagePath)
-    Else
-        ImagePath = ""
-    End If
+
+    DisplayImage (strChoice)
 End Sub
 
 
@@ -152,7 +163,10 @@ Private Sub updateProductList()
     CategoryID = Utilities.GetCategoryID(Category)
     If (CategoryID <> 0) Then
         sqlQuery = "SELECT ProductName FROM " & ProductQuery & " WHERE Category.Value = " & CategoryID
+        Debug.Print sqlQuery
         Product.RowSource = sqlQuery
+    Else
+        Product.RowSource = ""
     End If
 End Sub
 
@@ -219,6 +233,7 @@ Private Sub FillFields()
     Dim empID As Long
 
     Product = Nz(rstItem!Product, "")
+    ProductNameHeader = Nz(rstItem!Product, "")
     If (Product <> "") Then
         updateStyleList
         updateColumnList
@@ -241,7 +256,6 @@ Private Sub FillFields()
     Vendor = Nz(rstItem!Vendor, "")
     Description = Nz(rstItem!Description, "")
 
-    ImagePath = Nz(rstItem!ImagePath, "")
     DisplayImage Nz(rstItem!ImagePath, "")
 
     ItemLength = Nz(rstItem!ItemLength, "")
@@ -476,5 +490,17 @@ End Function
 '
 '------------------------------------------------------------
 Private Sub DisplayImage(path As String)
-    Image.Picture = path
+    Dim fileExtension As String
+
+    fileExtension = LCase(Right$(path, Len(path) - InStrRev(path, ".")))
+
+    If Utilities.FileExists(path) And _
+        ((fileExtension = "gif") Or (fileExtension = "png") Or _
+        (fileExtension = "jpg")) Then
+        Image.Picture = path
+        ImagePath = path
+    Else
+        ImagePath = ""
+        Image.Picture = ""
+    End If
 End Sub

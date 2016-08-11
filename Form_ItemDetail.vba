@@ -3,6 +3,7 @@ Option Explicit
 
 Private rstItem As DAO.Recordset
 Private rstInventory As DAO.Recordset
+Private rstCommitted As DAO.Recordset
 
 
 '------------------------------------------------------------
@@ -32,6 +33,7 @@ On Error GoTo Form_Open_Err
     open_db
     Set rstItem = db.OpenRecordset("SELECT TOP 1 * FROM " & ItemDB & " WHERE [ID] = " & CurrentItemID)
     Set rstInventory = db.OpenRecordset("SELECT TOP 1 * FROM " & InventoryDB & " WHERE [ItemID] = " & CurrentItemID)
+    Set rstCommitted = db.OpenRecordset(CommitDB)
 
     FillFields
 
@@ -51,8 +53,12 @@ End Sub
 '------------------------------------------------------------
 Private Sub Form_Unload(Cancel As Integer)
     ' Clean up
-    'rstItem.Close
-    'Set rstItem = Nothing
+    rstItem.Close
+    Set rstItem = Nothing
+    rstInventory.Close
+    Set rstInventory = Nothing
+    rstCommitted.Close
+    Set rstCommitted = Nothing
 End Sub
 
 
@@ -65,8 +71,7 @@ On Error GoTo cmdCommit_Click_Err
 
     Dim commitQuantity As Integer
     Dim commitPrompt, salesOrderPrompt As String
-    Dim qtyAvailable As Integer
-    Dim rstCommitted As DAO.Recordset
+    Dim qtyAvailable, onOrderQuantity, orderPrompt As Integer
 
     qtyAvailable = OnHand + OnOrder - Committed
 
@@ -107,8 +112,18 @@ On Error GoTo cmdCommit_Click_Err
         GoTo cmdCommit_Click_Exit
     End If
 
-    ' Open the recordset
-    Set rstCommitted = db.OpenRecordset(CommitDB)
+    ' Prompt if any of quantity is on order
+    If ((OnHand - Committed - commitQuantity) < 0) Then
+        onOrderQuantity = Abs(OnHand - Committed - commitQuantity)
+        orderPrompt = MsgBox("Warning:" & vbCrLf & _
+            onOrderQuantity & " of " & commitQuantity & " are On Order." & vbCrLf & _
+            "Complete Commit?", _
+            vbYesNo, _
+            "Quantity On Order")
+        If (orderPrompt = vbNo) Then
+            GoTo cmdCommit_Click_Exit
+        End If
+    End If
 
 cmdCommit_getSO:
     salesOrderPrompt = InputBox("Sales Order for Commit", "Sales Order", "")
@@ -188,7 +203,9 @@ End Sub
 '
 '------------------------------------------------------------
 Private Sub Image_DblClick(Cancel As Integer)
-    Utilities.SendMessage True, , , rstItem!ImagePath
+    If Utilities.FileExists(ImagePath) Then
+        Utilities.SendMessage True, , , ImagePath
+    End If
 End Sub
 
 
@@ -255,7 +272,7 @@ Private Sub FillFields()
     End If
 
     ' Order History
-    CommitHistory.Form.RecordSource = "SELECT * FROM " & CommitQuery & " WHERE ID=" & CurrentItemID & ";"
+    CommitHistory.Form.RecordSource = "SELECT * FROM " & CommitQuery & " WHERE ID=" & CurrentItemID & " ORDER BY DateActive DESC;"
     CommitHistory.Form.Requery
 
     ' Inventory

@@ -3,10 +3,23 @@ Option Compare Database
 '------------------------------------------------------------
 ' American Surplus Inventory Database
 ' Author: Nathanael Greene
-' Current Revision: 2.3.3
-' Revision Date: 12/15/2015
+' Current Revision: 2.4.0
+' Revision Date: 03/11/2016
 '
 ' Revision History:
+'   2.4.0:  New (OrderCommitManage): Add reactivate command
+'           New (ProductionCommit): Add reactivate command
+'           New (InventorySearchSubForm): Add Focus field and set order by
+'           New (ProductionCommit): Add reactivate command
+'           New: Added AdminInventoryPrice form to set Prices in bulk
+'           New (ItemDetail): cmdCommit to prompt if OnOrder
+'           New (ItemNew): Removed restriction of reserved Record IDs to user
+'           New (OrderCommitManage): Add adjust location command
+'           New (Login): Added Exit button
+'           Bug fix (OrderCommitManage) cmdSave QtyCommitted
+'           Bug fix (ItemInventoryManage) OnOrder not considered with commits
+'           Bug fix (Utilities, ItemNew, ItemEdit) capitalize RecordID prefix
+'           Bug fix (Utilities, ItemNew, ItemEdit) handle missing images
 '   2.3.3:  Bug fix: (ItemDetail) Missing photo causes load fail
 '           Bug fix: Changed Description fields to Plain Text
 '   2.3.2:  Bug fix: Missing references from ASIdev
@@ -65,7 +78,7 @@ Option Compare Database
 ' Global constants
 '
 '------------------------------------------------------------
-Public Const ReleaseVersion As String = "2.3.3"
+Public Const ReleaseVersion As String = "2.4.0"
 ''' User Roles
 Public Const DevelLevel As String = "Devel"
 Public Const AdminLevel As String = "Admin"
@@ -419,19 +432,19 @@ Public Function NewRecordID(strRecordPrefix As String, lowBound As Long) As Stri
                     rst.MoveNext
                     If .EOF Then
                         ' Capture next record
-                        NewRecordID = strRecordPrefix & "-" & Format(lowBound, "0000")
+                        NewRecordID = UCase(strRecordPrefix) & "-" & Format(lowBound, "0000")
                         GoTo CleanUp
                     End If
                 Else
                     ' No record matches low bound, use it
-                    NewRecordID = strRecordPrefix & "-" & Format(lowBound, "0000")
+                    NewRecordID = UCase(strRecordPrefix) & "-" & Format(lowBound, "0000")
                     GoTo CleanUp
                 End If
             Loop
         End With
     Else
         ' No records found, use low bound
-        NewRecordID = strRecordPrefix & "-" & Format(lowBound, "0000")
+        NewRecordID = UCase(strRecordPrefix) & "-" & Format(lowBound, "0000")
     End If
 
 CleanUp:
@@ -683,7 +696,7 @@ Public Function StripRecordID(strRecordPrefix As String, strRecordID As String) 
     Dim regEx2 As New RegExp
     Dim regexReplace As String
 
-    regEx1.Pattern = "^" & strRecordPrefix & "-"
+    regEx1.Pattern = "^" & UCase(strRecordPrefix) & "-"
     regEx2.Pattern = "[^0-9]$"
     regEx1.IgnoreCase = True
     regEx2.IgnoreCase = True
@@ -709,7 +722,7 @@ Public Function GetRecordPrefix(strRecordID As String) As String
     regEx.IgnoreCase = True
     regexReplace = ""
 
-    GetRecordPrefix = regEx.Replace(strRecordID, regexReplace)
+    GetRecordPrefix = UCase(regEx.Replace(strRecordID, regexReplace))
 
 End Function
 
@@ -874,9 +887,10 @@ Public Function Commit_Cancel(rst As DAO.Recordset) As Boolean
     rst.MoveFirst
     Do While Not rst.EOF
         If (rst!Status = "A") Then
-            ' Check existing available quantity
-            If (rst!OnHand < 0) Or (rst!OnHand < rst!Committed) Then
+            ' Flag invalid inventory quantities
+            If (rst!OnHand < 0) Or (rst!OnOrder < 0) Then
                 GoTo Quantity_Err
+            ' Flag invalid commit quantities
             ElseIf (rst!Committed <= 0) Or (rst!QtyCommitted <= 0) Then
                 GoTo Quantity_Err
             End If
@@ -908,13 +922,13 @@ Commit_Cancel_Err:
     GoTo Commit_Cancel_Exit
 
 Status_Err:
-    MsgBox "Error: " & vbCrLf & "Cannot Delete Commit " & rst!ID & vbCrLf & _
-        "Commit must be active", , "Status Error"
+    MsgBox "Error: " & vbCrLf & "Cannot Cancel Commit " & rst!ID & vbCrLf & _
+        "Commit must be Active", , "Status Error"
     Commit_Cancel = False
     GoTo Commit_Cancel_Exit
 
 Quantity_Err:
-    MsgBox "Error: " & vbCrLf & "Cannot Delete Commit " & rst!ID & vbCrLf & _
+    MsgBox "Error: " & vbCrLf & "Cannot Cancel Commit " & rst!ID & vbCrLf & _
         "Commit Quantity or Item Available Quantity are invalid", , "Quantity Error"
     Commit_Cancel = False
     GoTo Commit_Cancel_Exit
@@ -923,8 +937,64 @@ End Function
 
 
 '------------------------------------------------------------
-' Commit_Complete
+' Commit_Reactivate
 '
+'------------------------------------------------------------
+Public Function Commit_Reactivate(ByRef rst As DAO.Recordset) As Boolean
+    On Error GoTo Commit_Reactivate_Err
+
+    rst.MoveFirst
+    Do While Not rst.EOF
+        If (rst!Status = "A") Then
+            GoTo Status_Err
+        ElseIf (rst!Status = "C") Then
+            With rst
+                .Edit
+                !DateComplete = Null
+                !Status = "A"
+                !OperatorComplete = ""
+                !Committed = !Committed + !QtyCommitted
+                !OnHand = !OnHand + !QtyCommitted
+                !LastOper = EmployeeLogin
+                !LastDate = Now()
+                .Update
+            End With
+        ElseIf (rst!Status = "X") Then
+            With rst
+                .Edit
+                !DateCancel = Null
+                !Status = "A"
+                !OperatorCancel = ""
+                !Committed = !Committed + !QtyCommitted
+                !LastOper = EmployeeLogin
+                !LastDate = Now()
+                .Update
+            End With
+        End If
+        rst.MoveNext
+    Loop
+    Commit_Reactivate = True
+    rst.MoveFirst
+
+Commit_Reactivate_Exit:
+    Exit Function
+
+Commit_Reactivate_Err:
+    MsgBox "Error: (" & Err.Number & ") " & Err.Description, vbCritical
+    Commit_Reactivate = False
+    GoTo Commit_Reactivate_Exit
+
+Status_Err:
+    MsgBox "Error: " & vbCrLf & "Cannot Reactivate Commitment " & rst!ID & vbCrLf & _
+        "Commit must be not be active", , "Status Error"
+    Commit_Reactivate = False
+    GoTo Commit_Reactivate_Exit
+
+End Function
+
+
+'------------------------------------------------------------
+' Commit_Complete
 '------------------------------------------------------------
 Public Function Commit_Complete(ByRef rst As DAO.Recordset) As Boolean
     On Error GoTo Commit_Complete_Err
@@ -972,7 +1042,7 @@ Commit_Complete_Err:
 
 Status_Err:
     MsgBox "Error: " & vbCrLf & "Cannot Complete Commit " & rst!ID & vbCrLf & _
-        "Commit must be active", , "Status Error"
+        "Commit must be Active", , "Status Error"
     Commit_Complete = False
     GoTo Commit_Complete_Exit
 
@@ -989,7 +1059,8 @@ End Function
 ' OperationEntry
 '
 '------------------------------------------------------------
-Public Sub OperationEntry(ItemID As Long, Operation As String, Description As String)
+Public Sub OperationEntry(ItemID As Long, Operation As String, Description As String, _
+    Optional Reason As String)
     On Error GoTo OperationEntry_Err
 
     Dim rst As Recordset
@@ -1003,6 +1074,9 @@ Public Sub OperationEntry(ItemID As Long, Operation As String, Description As St
         !Date = Now()
         !Operation = Operation
         !Description = Description
+        If (Reason <> "") Then
+            !Reason = Reason
+        End If
         .Update
     End With
 
@@ -1114,3 +1188,49 @@ Sub SendMessage(DisplayMsg As Boolean, _
     Set objOutlookAttach = Nothing
 
 End Sub
+
+
+'------------------------------------------------------------
+' FileExists
+'
+'------------------------------------------------------------
+Function FileExists(ByVal strFile As String, Optional bFindFolders As Boolean) As Boolean
+    'Purpose:   Return True if the file exists, even if it is hidden.
+    'Arguments: strFile: File name to look for. Current directory searched if no path included.
+    '           bFindFolders. If strFile is a folder, FileExists() returns False unless this argument is True.
+    'Note:      Does not look inside subdirectories for the file.
+    'Author:    Allen Browne. http://allenbrowne.com June, 2006.
+    Dim lngAttributes As Long
+
+    'Include read-only files, hidden files, system files.
+    lngAttributes = (vbReadOnly Or vbHidden Or vbSystem)
+
+    If bFindFolders Then
+        lngAttributes = (lngAttributes Or vbDirectory) 'Include folders as well.
+    Else
+        'Strip any trailing slash, so Dir does not look inside the folder.
+        Do While Right$(strFile, 1) = "\"
+            strFile = Left$(strFile, Len(strFile) - 1)
+        Loop
+    End If
+
+    'If Dir() returns something, the file exists.
+    On Error Resume Next
+    If IsFileName(strFile) Then
+        FileExists = (Len(Dir(strFile, lngAttributes)) > 0)
+    Else
+        FileExists = False
+    End If
+End Function
+
+
+'------------------------------------------------------------
+' IsFileName
+'
+'------------------------------------------------------------
+Function IsFileName(ByVal strFile As String) As Boolean
+    'Purpose:   Return True if the input string has a file extension
+    'Arguments: strFile: File name to look at
+
+    IsFileName = (Len(Right$(path, Len(path) - InStrRev(path, "."))) > 0)
+End Function

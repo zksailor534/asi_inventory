@@ -22,7 +22,7 @@ Private Sub Form_Open(Cancel As Integer)
     End If
 
     ' Set the subform properties
-    Set subForm = sbfrmInvSearch.Form
+    Set subForm = sbfrmInvPrice.Form
 
     ' Set screen view properties
     subForm.DatasheetFontHeight = 10
@@ -46,6 +46,7 @@ Private Sub Form_Open(Cancel As Integer)
     ' Set column visibility
     SetColumnVisibility
 
+outNow:
     CategorySelected.SetFocus
 
 End Sub
@@ -58,7 +59,7 @@ End Sub
 Private Sub CategorySelected_AfterUpdate()
 
     Dim subForm As Access.Form
-    Set subForm = sbfrmInvSearch.Form
+    Set subForm = sbfrmInvPrice.Form
 
     ' Engage filter from category selection
     searchCategory = CategorySelected
@@ -68,55 +69,9 @@ Private Sub CategorySelected_AfterUpdate()
 
     SetColumnVisibility
 
+outNow:
     CategorySelected.SetFocus
 
-End Sub
-
-
-'------------------------------------------------------------
-' RecordIDFilter_AfterUpdate
-'
-'------------------------------------------------------------
-Private Sub RecordIDFilter_AfterUpdate()
-    If Not (IsNull(RecordIDFilter)) Or (RecordIDFilter <> "") Then
-        IDFilterButton_Click
-    End If
-End Sub
-
-
-'------------------------------------------------------------
-' IDFilterButton_Click
-'
-'------------------------------------------------------------
-Private Sub IDFilterButton_Click()
-    If IsNull(RecordIDFilter) Or (RecordIDFilter = "") Then
-        RecordIDFilter.SetFocus
-    Else
-        If ValidRecordID(RecordIDFilter) Then
-            ' Engage filter from RecordID selection
-            Me.sbfrmInvSearch.Form.Filter = "[Category]='" & searchCategory & "' AND [OnHand]>0" & _
-                " AND [RecordID] = '" & RecordIDFilter & "'"
-            Me.sbfrmInvSearch.Form.FilterOn = True
-            Me.sbfrmInvSearch.Form.Requery
-            CurrentItemID = GetRecordItemID(RecordIDFilter)
-        Else
-            RecordIDFilter = ""
-            RecordIDFilter.SetFocus
-        End If
-    End If
-End Sub
-
-
-'------------------------------------------------------------
-' ClearFilterButton_Click
-'
-'------------------------------------------------------------
-Private Sub ClearFilterButton_Click()
-    RecordIDFilter = ""
-    CurrentSalesOrder = ""
-    Me.sbfrmInvSearch.Form.Filter = "[Category]= '" & searchCategory & "' AND [OnHand] > 0"
-    Me.sbfrmInvSearch.Form.FilterOn = True
-    Me.sbfrmInvSearch.Form.Requery
 End Sub
 
 
@@ -131,18 +86,12 @@ Private Sub StockSelected_AfterUpdate()
         Me.sbfrmInvSearch.Form.FilterOn = True
         Me.sbfrmInvSearch.Form.Controls("OnOrder").ColumnHidden = True
         Me.sbfrmInvSearch.Form.Requery
-    ElseIf (StockSelected.Value = "Inbound") Then
+    ElseIf (StockSelected.Value = "Inbound Only") Then
         Me.CategorySelected = ""
         Me.sbfrmInvSearch.Form.Filter = "[OnOrder] > 0"
         Me.sbfrmInvSearch.Form.FilterOn = True
         Me.sbfrmInvSearch.Form.Controls("OnOrder").ColumnHidden = False
         Me.sbfrmInvSearch.Form.Controls("OnOrder").ColumnOrder = 5
-        Me.sbfrmInvSearch.Form.Requery
-    ElseIf (StockSelected.Value = "Out of Stock") Then
-        Me.CategorySelected = searchCategory
-        Me.sbfrmInvSearch.Form.Filter = "[Category]= '" & searchCategory & "' AND [OnHand] <= 0"
-        Me.sbfrmInvSearch.Form.FilterOn = True
-        Me.sbfrmInvSearch.Form.Controls("OnOrder").ColumnHidden = True
         Me.sbfrmInvSearch.Form.Requery
     End If
 End Sub
@@ -156,7 +105,7 @@ Private Sub PrintButton_Click()
     On Error GoTo PrintButton_ErrHandler
 
     PrintCategorySelected = searchCategory
-    PrintFilter = sbfrmInvSearch.Form.Filter
+    PrintFilter = sbfrmInvPrice.Form.Filter
 
     ' Open PrintRange form
     DoCmd.OpenForm PrintRangeForm, acFormDS, , , , , acWindowNormal
@@ -170,56 +119,6 @@ PrintButton_ErrHandler:
     MsgBox "Error in SelRecsBtn_Click( ) in" & vbCrLf & Me.Name & " form." & vbCrLf & vbCrLf & "Error #" & Err.Number & vbCrLf & vbCrLf & Err.Description
     Err.Clear
     GoTo PrintButton_Exit
-
-End Sub
-
-
-'------------------------------------------------------------
-' ViewItemButton_Click
-'
-'------------------------------------------------------------
-Private Sub ViewItemButton_Click()
-
-    If (CurrentItemID <> 0) Then
-        DoCmd.OpenForm ItemDetailForm
-    Else
-        MsgBox "Please select record to view"
-        Exit Sub
-    End If
-
-End Sub
-
-
-'------------------------------------------------------------
-' EditItemButton_Click
-'
-'------------------------------------------------------------
-Private Sub EditItemButton_Click()
-
-    If (CurrentItemID > 0) Then
-        DoCmd.OpenForm ItemEditForm, acNormal, , , , acDialog
-        Me.sbfrmInvSearch.Form.Requery
-    Else
-        MsgBox "Please select record to edit"
-        Exit Sub
-    End If
-
-End Sub
-
-
-'------------------------------------------------------------
-' ManageInvButton_Click
-'
-'------------------------------------------------------------
-Private Sub ManageInvButton_Click()
-
-    If (CurrentItemID > 0) Then
-        DoCmd.OpenForm ItemInventoryManageForm, acNormal, , , , acDialog
-        Me.sbfrmInvSearch.Form.Requery
-    Else
-        MsgBox "Please select record to edit"
-        Exit Sub
-    End If
 
 End Sub
 
@@ -239,10 +138,10 @@ End Sub
 '------------------------------------------------------------
 Private Sub SetScreenSize()
     On Error Resume Next
-    Me.sbfrmInvSearch.Left = 0
-    Me.sbfrmInvSearch.Top = 0
-    Me.sbfrmInvSearch.Width = Round(Me.WindowWidth)
-    Me.sbfrmInvSearch.Height = Round(Me.WindowHeight * 0.95)
+    Me.sbfrmInvPrice.Left = 0
+    Me.sbfrmInvPrice.Top = 0
+    Me.sbfrmInvPrice.Width = Round(Me.WindowWidth)
+    Me.sbfrmInvPrice.Height = Round(Me.WindowHeight * 0.95)
 End Sub
 
 
@@ -256,7 +155,7 @@ Private Sub SetColumnVisibility()
     Dim formCntrl As Control
     Dim LeftColumns, ColumnValue, ii As Integer
 
-    Set subForm = sbfrmInvSearch.Form
+    Set subForm = sbfrmInvPrice.Form
     LeftColumns = 6
 
     ' Set column visibility and order
@@ -267,7 +166,7 @@ Private Sub SetColumnVisibility()
                 ' Column is visible
                 formCntrl.ColumnHidden = False
 
-                ' Set column order
+                ' Set column order (doubled columnvalue to ensure that order is correct)
                 formCntrl.ColumnOrder = LeftColumns + (ColumnValue * 2)
 
                 ' Set column width to fit, except Description and Condition
@@ -291,11 +190,14 @@ Private Sub SetColumnVisibility()
     subForm.OnHand.ColumnOrder = 3
     subForm.Available.ColumnOrder = 4
 
+    ' Set Price column location
+    subForm.SuggSellingPrice.ColumnOrder = 5
+
     ' Set Warehouse column sizes
     subForm.Location.ColumnWidth = -2
     subForm.RecordID.ColumnWidth = 900
-    subForm.OnHand.ColumnWidth = 700
-    subForm.Available.ColumnWidth = 700
+    subForm.OnHand.ColumnWidth = 550
+    subForm.Available.ColumnWidth = 550
 
     ' Set Warehouse column visibility
     subForm.Location.ColumnHidden = False
@@ -304,38 +206,3 @@ Private Sub SetColumnVisibility()
     subForm.Available.ColumnHidden = False
 
 End Sub
-
-
-'------------------------------------------------------------
-' ValidRecordID
-'
-'------------------------------------------------------------
-Private Function ValidRecordID(RecordID As String) As Boolean
-    On Error Resume Next
-    If Not (IsNull(DLookup("RecordID", WarehouseQuery, "[Category]= '" & searchCategory & _
-        "' AND [RecordID]='" & RecordID & "'"))) Then
-        ValidRecordID = True
-    Else
-        MsgBox "Invalid Record ID: Not Found", vbOKOnly, "Invalid Record ID"
-        ValidRecordID = False
-    End If
-End Function
-
-
-'------------------------------------------------------------
-' GetRecordItemID
-'
-'------------------------------------------------------------
-Private Function GetRecordItemID(RecordID As String) As Long
-    On Error Resume Next
-
-    Dim ItemID As Long
-
-    ItemID = DLookup("ID", WarehouseQuery, "[Category]= '" & searchCategory & _
-        "' AND [RecordID]='" & RecordID & "'")
-    If Not (IsNull(ItemID)) Then
-        GetRecordItemID = ItemID
-    Else
-        GetRecordItemID = 0
-    End If
-End Function
