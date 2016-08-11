@@ -163,7 +163,10 @@ Private Sub updateProductList()
     CategoryID = Utilities.GetCategoryID(Category)
     If (CategoryID <> 0) Then
         sqlQuery = "SELECT ProductName FROM " & ProductQuery & " WHERE Category.Value = " & CategoryID
+        Debug.Print sqlQuery
         Product.RowSource = sqlQuery
+    Else
+        Product.RowSource = ""
     End If
 End Sub
 
@@ -230,6 +233,7 @@ Private Sub FillFields()
     Dim empID As Long
 
     Product = Nz(rstItem!Product, "")
+    ProductNameHeader = Nz(rstItem!Product, "")
     If (Product <> "") Then
         updateStyleList
         updateColumnList

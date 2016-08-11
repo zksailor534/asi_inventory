@@ -3,10 +3,23 @@ Option Compare Database
 '------------------------------------------------------------
 ' American Surplus Inventory Database
 ' Author: Nathanael Greene
-' Current Revision: 2.3.3
-' Revision Date: 12/15/2015
+' Current Revision: 2.4.0
+' Revision Date: 03/11/2016
 '
 ' Revision History:
+'   2.4.0:  New (OrderCommitManage): Add reactivate command
+'           New (ProductionCommit): Add reactivate command
+'           New (InventorySearchSubForm): Add Focus field and set order by
+'           New (ProductionCommit): Add reactivate command
+'           New: Added AdminInventoryPrice form to set Prices in bulk
+'           New (ItemDetail): cmdCommit to prompt if OnOrder
+'           New (ItemNew): Removed restriction of reserved Record IDs to user
+'           New (OrderCommitManage): Add adjust location command
+'           New (Login): Added Exit button
+'           Bug fix (OrderCommitManage) cmdSave QtyCommitted
+'           Bug fix (ItemInventoryManage) OnOrder not considered with commits
+'           Bug fix (Utilities, ItemNew, ItemEdit) capitalize RecordID prefix
+'           Bug fix (Utilities, ItemNew, ItemEdit) handle missing images
 '   2.3.3:  Bug fix: (ItemDetail) Missing photo causes load fail
 '           Bug fix: Changed Description fields to Plain Text
 '   2.3.2:  Bug fix: Missing references from ASIdev
@@ -65,7 +78,7 @@ Option Compare Database
 ' Global constants
 '
 '------------------------------------------------------------
-Public Const ReleaseVersion As String = "2.3.3"
+Public Const ReleaseVersion As String = "2.4.0"
 ''' User Roles
 Public Const DevelLevel As String = "Devel"
 Public Const AdminLevel As String = "Admin"
@@ -1046,7 +1059,8 @@ End Function
 ' OperationEntry
 '
 '------------------------------------------------------------
-Public Sub OperationEntry(ItemID As Long, Operation As String, Description As String)
+Public Sub OperationEntry(ItemID As Long, Operation As String, Description As String, _
+    Optional Reason As String)
     On Error GoTo OperationEntry_Err
 
     Dim rst As Recordset
@@ -1060,6 +1074,9 @@ Public Sub OperationEntry(ItemID As Long, Operation As String, Description As St
         !Date = Now()
         !Operation = Operation
         !Description = Description
+        If (Reason <> "") Then
+            !Reason = Reason
+        End If
         .Update
     End With
 
