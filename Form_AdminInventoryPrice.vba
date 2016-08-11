@@ -124,15 +124,6 @@ End Sub
 
 
 '------------------------------------------------------------
-' Form_Resize
-'
-'------------------------------------------------------------
-Private Sub Form_Resize()
-    SetScreenSize
-End Sub
-
-
-'------------------------------------------------------------
 ' SetScreenSize
 '
 '------------------------------------------------------------
@@ -140,7 +131,7 @@ Private Sub SetScreenSize()
     On Error Resume Next
     Me.sbfrmInvPrice.Left = 0
     Me.sbfrmInvPrice.Top = 0
-    Me.sbfrmInvPrice.Width = Round(Me.WindowWidth)
+    Me.sbfrmInvPrice.Width = ScreenWidth
     Me.sbfrmInvPrice.Height = Round(Me.WindowHeight * 0.95)
 End Sub
 

@@ -239,12 +239,6 @@ Private Sub CompleteCommitButton_Click()
 End Sub
 
 
-'------------------------------------------------------------
-' Form_Resize
-'
-'------------------------------------------------------------
-Private Sub Form_Resize()
-    SetScreenSize
 End Sub
 
 
@@ -253,10 +247,9 @@ End Sub
 '
 '------------------------------------------------------------
 Private Sub SetScreenSize()
-    On Error Resume Next
     Me.sbfrmOrderSearch.Left = 0
     Me.sbfrmOrderSearch.Top = 0
-    Me.sbfrmOrderSearch.Width = Round(Me.WindowWidth)
+    Me.sbfrmOrderSearch.Width = ScreenWidth
     Me.sbfrmOrderSearch.Height = Round(Me.WindowHeight * 0.95)
 End Sub
 

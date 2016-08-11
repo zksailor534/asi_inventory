@@ -6,27 +6,7 @@ Option Compare Database
 '
 '------------------------------------------------------------
 Private Sub Form_Load()
-    screenSize
     setUserPermissions
-End Sub
-
-
-'------------------------------------------------------------
-' Form_Resize
-'
-'------------------------------------------------------------
-Private Sub Form_Resize()
-    screenSize
-End Sub
-
-
-'------------------------------------------------------------
-' screenSize
-'
-'------------------------------------------------------------
-Private Sub screenSize()
-    On Error Resume Next
-    Me.Form.Width = Round(Me.InsideWidth * 0.9)
 End Sub
 
 
