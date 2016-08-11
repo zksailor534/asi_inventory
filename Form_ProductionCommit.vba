@@ -108,6 +108,7 @@ Private Sub ManageCommitButton_Click()
 
     If IsNull(CurrentCommitID) Or (CurrentCommitID = 0) Then
         MsgBox "No commitment selected:" & vbCrLf & "Please select commitment to edit", , "Invalid Commit"
+        Debug.Print "CurrentCommitID", CurrentCommitID
         Exit Sub
     Else
         If (EmployeeRole = SalesLevel) And EmployeeLogin <> SalesOrderUser(CurrentSalesOrder) Then
@@ -254,28 +255,28 @@ End Function
 '------------------------------------------------------------
 Private Function GetFilter(Role As String, Order As String) As String
     On Error Resume Next
-    ' Sales Role, Active, No Order
+    ' Active, No Order
     If (Role = SalesLevel) And (ActiveToggle.Value = True) And (Order = "") Then
         GetFilter = "[Status]='A' AND [OperatorActive]='" & EmployeeLogin & "'"
-    ' Any Role, Active, No Order
-    ElseIf (Role <> SalesLevel) And (ActiveToggle.Value = True) And (Order = "") Then
-        GetFilter = "[Status]='A'"
-    ' Sales Role, Not Active, No Order
+    ' Not Active, No Order
     ElseIf (Role = SalesLevel) And (ActiveToggle.Value = False) And (Order = "") Then
         GetFilter = "[OperatorActive]='" & EmployeeLogin & "'"
-    ' Any Role, Not Active, No Order
-    ElseIf (Role <> SalesLevel) And (ActiveToggle.Value = False) And (Order = "") Then
-        GetFilter = "[Status] IS NOT NULL"
-    ' Sales Role, Active, Order
+    ' Active, Order
     ElseIf (Role = SalesLevel) And (ActiveToggle.Value = True) And (Order <> "") Then
         GetFilter = "[Status]='A' AND [OperatorActive]='" & EmployeeLogin & "' AND [Reference]= '" & Order & "'"
-    ' Any Role, Active, Order
-    ElseIf (Role <> SalesLevel) And (ActiveToggle.Value = True) And (Order <> "") Then
-        GetFilter = "[Status]='A' AND [Reference]= '" & Order & "'"
-    ' Sales Role, Not Active, Order
+    ' Not Active, Order
     ElseIf (Role = SalesLevel) And (ActiveToggle.Value = False) And (Order <> "") Then
         GetFilter = "[OperatorActive]='" & EmployeeLogin & "' AND [Reference]= '" & Order & "'"
-    ' Any Role, Not Active, Order
+    ' Manager Roles, Active, No Order
+    ElseIf (Role <> SalesLevel) And (ActiveToggle.Value = True) And (Order = "") Then
+        GetFilter = "[Status]='A'"
+    ' Manager Roles, Not Active, No Order
+    ElseIf (Role <> SalesLevel) And (ActiveToggle.Value = False) And (Order = "") Then
+        GetFilter = ""
+    ' Manager Roles, Active, Order
+    ElseIf (Role <> SalesLevel) And (ActiveToggle.Value = True) And (Order <> "") Then
+        GetFilter = "[Status]='A' AND [Reference]= '" & Order & "'"
+    ' Manager Roles, Not Active, Order
     ElseIf (Role <> SalesLevel) And (ActiveToggle.Value = False) And (Order <> "") Then
         GetFilter = "[Reference]= '" & Order & "'"
     End If

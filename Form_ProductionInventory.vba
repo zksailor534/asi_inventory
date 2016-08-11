@@ -33,12 +33,12 @@ Private Sub Form_Open(Cancel As Integer)
     subForm.Controls("LastOper").ColumnHidden = True
     subForm.Controls("LastDate").ColumnHidden = True
 
-    ' Default Inbound toggle to false
-    Me.InboundToggle.Value = False
+    ' Default Stock Selected combobox to On Hand
+    Me.StockSelected.Value = "On Hand"
     subForm.Controls("OnOrder").ColumnHidden = True
 
     ' Engage filter from category selection
-    subForm.Filter = "[Category] LIKE '" & CategorySelected & "'"
+    subForm.Filter = "[Category]= '" & CategorySelected & "' AND [OnHand] > 0"
     subForm.FilterOn = True
 
     ' Set column visibility
@@ -59,7 +59,7 @@ Private Sub CategorySelected_AfterUpdate()
     Set subForm = sbfrmInvSearch.Form
 
     ' Engage filter from category selection
-    subForm.Filter = "[Category]= '" & CategorySelected & "'"
+    subForm.Filter = "[Category]= '" & CategorySelected & "' AND [OnHand] > 0"
     subForm.FilterOn = True
 
     SetColumnVisibility
@@ -90,7 +90,7 @@ Private Sub IDFilterButton_Click()
     Else
         If ValidRecordID(RecordIDFilter) Then
             ' Engage filter from RecordID selection
-            Me.sbfrmInvSearch.Form.Filter = "[Category]= '" & CategorySelected & _
+            Me.sbfrmInvSearch.Form.Filter = "[Category]= '" & CategorySelected & "' AND [OnHand] > 0" & _
                 "' AND [RecordID] = '" & RecordIDFilter & "'"
             Me.sbfrmInvSearch.Form.FilterOn = True
             CurrentItemID = GetRecordItemID(RecordIDFilter)
@@ -109,29 +109,50 @@ End Sub
 Private Sub ClearFilterButton_Click()
     RecordIDFilter = ""
     CurrentSalesOrder = ""
-    Me.sbfrmInvSearch.Form.Filter = "[Category]= '" & CategorySelected & "'"
+    Me.sbfrmInvSearch.Form.Filter = "[Category]= '" & CategorySelected & "' AND [OnHand] > 0"
     Me.sbfrmInvSearch.Form.FilterOn = True
     Me.sbfrmInvSearch.Form.Requery
 End Sub
 
 
 '------------------------------------------------------------
-' InboundToggle_Click
+' StockSelected_AfterUpdate
 '
 '------------------------------------------------------------
-Private Sub InboundToggle_Click()
-    If (InboundToggle.Value = True) Then
+Private Sub StockSelected_AfterUpdate()
+    If (StockSelected.Value = "On Hand") Then
+        Me.sbfrmInvSearch.Form.Filter = "[Category]= '" & CategorySelected & "' AND [OnHand] > 0"
+        Me.sbfrmInvSearch.Form.FilterOn = True
+        Me.sbfrmInvSearch.Form.Controls("OnOrder").ColumnHidden = True
+        Me.sbfrmInvSearch.Form.Requery
+    ElseIf (StockSelected.Value = "Inbound") Then
         Me.sbfrmInvSearch.Form.Filter = "[OnOrder] > 0"
         Me.sbfrmInvSearch.Form.FilterOn = True
         Me.sbfrmInvSearch.Form.Controls("OnOrder").ColumnHidden = False
         Me.sbfrmInvSearch.Form.Controls("OnOrder").ColumnOrder = 5
         Me.sbfrmInvSearch.Form.Requery
-    Else
-        Me.sbfrmInvSearch.Form.Filter = "[Category]= '" & CategorySelected & "'"
+    ElseIf (StockSelected.Value = "Out of Stock") Then
+        Me.sbfrmInvSearch.Form.Filter = "[Category]= '" & CategorySelected & "' AND [OnHand] <= 0"
         Me.sbfrmInvSearch.Form.FilterOn = True
         Me.sbfrmInvSearch.Form.Controls("OnOrder").ColumnHidden = True
         Me.sbfrmInvSearch.Form.Requery
     End If
+End Sub
+
+
+'------------------------------------------------------------
+' ViewItemButton_Click
+'
+'------------------------------------------------------------
+Private Sub ViewItemButton_Click()
+
+    If (CurrentItemID <> 0) Then
+        DoCmd.OpenForm ItemDetailForm
+    Else
+        MsgBox "Please select record to view"
+        Exit Sub
+    End If
+
 End Sub
 
 
@@ -145,6 +166,7 @@ Private Sub EditItemButton_Click()
         DoCmd.OpenForm ItemEditForm, acNormal, , , , acDialog
         Me.sbfrmInvSearch.Form.Requery
     Else
+        Debug.Print "CurrentItemID", CurrentItemID
         MsgBox "Please select record to edit"
         Exit Sub
     End If

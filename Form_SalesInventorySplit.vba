@@ -120,8 +120,8 @@ End Sub
 '------------------------------------------------------------
 Private Sub cmdCloseSplit_Click()
     If Utilities.HasParent(Me) Then
-        If Me.Parent.Name = InventoryForm Then
-            Me.Parent!nvbSearch.NavigationTargetName = InventorySearchForm
+        If Me.Parent.Name = SalesForm Then
+            Me.Parent!nvbSearch.NavigationTargetName = SalesSearch
             Me.Parent!nvbSearch.SetFocus
             SendKeys "{ENTER}", 0
         End If
