@@ -91,6 +91,7 @@ Public CurrentItemID As Long
 Public CurrentCommitID As Long
 Public CurrentSalesOrder As String
 Public PrintCategorySelected As String
+Public PrintFilter As String
 Public CompanyName As String
 Public CompanyAddress As String
 Public CompanyCity As String
