@@ -188,7 +188,9 @@ End Sub
 '
 '------------------------------------------------------------
 Private Sub Image_DblClick(Cancel As Integer)
-    Utilities.SendMessage True, , , rstItem!ImagePath
+    If Utilities.FileExists(ImagePath) Then
+        Utilities.SendMessage True, , , ImagePath
+    End If
 End Sub
 
 

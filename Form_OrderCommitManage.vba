@@ -404,7 +404,25 @@ End Sub
 '
 '------------------------------------------------------------
 Private Sub Image_DblClick(Cancel As Integer)
-    Utilities.SendMessage True, , , rstCommit!ImagePath
+    If Utilities.FileExists(ImagePath) Then
+        Utilities.SendMessage True, , , ImagePath
+    End If
+End Sub
+
+'------------------------------------------------------------
+' LocAdjustCheck_Click
+'
+'------------------------------------------------------------
+Private Sub LocAdjustCheck_Click()
+    If (LocAdjustCheck.Value = True) Then
+        Location.Enabled = True
+        Location.Locked = False
+        Utilities.FieldAvailableSet Me.Controls("Location")
+    Else
+        Location.Enabled = False
+        Location.Locked = True
+        Utilities.FieldAvailableRemove Me.Controls("Location")
+    End If
 End Sub
 
 '------------------------------------------------------------
@@ -492,49 +510,94 @@ End Sub
 '
 '------------------------------------------------------------
 Private Sub SetVisibility()
-    ' Employee Role settings
-    If (EmployeeRole = SalesLevel) Then
+
+    ' Can only reactivate Change Completed or Cancelled Orders
+    If (Status = "C" Or Status = "X") Then
+        lblLocAdjust.Visible = False
+        LocAdjustCheck.Visible = False
+        LocAdjustCheck.Enabled = False
+        lblQtyAdjust.Visible = False
+        QtyAdjustCheck.Visible = False
+        QtyAdjustCheck.Enabled = False
+        cmdSave.Enabled = False
+        cmdSave.Visible = False
         cmdComplete.Enabled = False
         cmdComplete.Visible = False
-        cmdDelete.Enabled = True
-        cmdDelete.Visible = True
-        lblQtyAdjust.Visible = False
-        QtyAdjustCheck.Visible = False
-        QtyAdjustCheck.Enabled = False
-        lblNewQuantity.Visible = False
-        NewQuantity.Visible = False
-        NewQuantity.Enabled = False
-    ElseIf (EmployeeRole = ProdLevel) Then
-        cmdComplete.Enabled = True
-        cmdComplete.Visible = True
-        cmdDelete.Enabled = True
-        cmdDelete.Visible = True
-        lblQtyAdjust.Visible = True
-        QtyAdjustCheck.Visible = True
-        QtyAdjustCheck.Enabled = True
-        lblNewQuantity.Visible = True
-        NewQuantity.Visible = True
-        NewQuantity.Enabled = False
-    Else
-        cmdComplete.Enabled = True
-        cmdComplete.Visible = True
-        cmdDelete.Enabled = True
-        cmdDelete.Visible = True
-        lblQtyAdjust.Visible = True
-        QtyAdjustCheck.Visible = True
-        QtyAdjustCheck.Enabled = True
-        lblNewQuantity.Visible = True
-        NewQuantity.Visible = True
-        NewQuantity.Enabled = False
-    End If
 
-    ' Order status settings
-    If Me.Status <> "A" Then
-        lblQtyAdjust.Visible = False
-        QtyAdjustCheck.Visible = False
-        QtyAdjustCheck.Enabled = False
-        lblNewQuantity.Visible = False
-        NewQuantity.Visible = False
-        NewQuantity.Enabled = False
+        If (EmployeeRole = SalesLevel) Then
+            cmdActive.Enabled = False
+            cmdActive.Visible = False
+        Else
+            cmdActive.Enabled = True
+            cmdActive.Visible = True
+        End If
+
+        cmdCancel.Enabled = False
+        cmdCancel.Visible = False
+    Else
+        If (EmployeeRole = SalesLevel) Then
+        ' Employee Sales Role settings
+            cmdComplete.Enabled = False
+            cmdComplete.Visible = False
+            cmdActive.Enabled = False
+            cmdActive.Visible = False
+            cmdCancel.Enabled = True
+            cmdCancel.Visible = True
+            lblLocAdjust.Visible = False
+            LocAdjustCheck.Visible = False
+            LocAdjustCheck.Enabled = False
+            lblQtyAdjust.Visible = False
+            QtyAdjustCheck.Visible = False
+            QtyAdjustCheck.Enabled = False
+        ElseIf (EmployeeRole = ProdLevel) Then
+        ' Employee Production Role settings
+            cmdComplete.Enabled = False
+            cmdComplete.Visible = False
+            cmdActive.Enabled = False
+            cmdActive.Visible = False
+            cmdCancel.Enabled = True
+            cmdCancel.Visible = True
+            lblLocAdjust.Visible = True
+            LocAdjustCheck.Visible = True
+            LocAdjustCheck.Enabled = True
+            lblQtyAdjust.Visible = True
+            QtyAdjustCheck.Visible = True
+            QtyAdjustCheck.Enabled = True
+        Else
+        ' Employee Manager Role settings
+            cmdComplete.Enabled = True
+            cmdComplete.Visible = True
+            cmdActive.Enabled = False
+            cmdActive.Visible = False
+            cmdCancel.Enabled = True
+            cmdCancel.Visible = True
+            lblLocAdjust.Visible = True
+            LocAdjustCheck.Visible = True
+            LocAdjustCheck.Enabled = True
+            lblQtyAdjust.Visible = True
+            QtyAdjustCheck.Visible = True
+            QtyAdjustCheck.Enabled = True
+        End If
+    End If
+End Sub
+
+
+'------------------------------------------------------------
+' DisplayImage
+'
+'------------------------------------------------------------
+Private Sub DisplayImage(path As String)
+    Dim fileExtension As String
+
+    fileExtension = LCase(Right$(path, Len(path) - InStrRev(path, ".")))
+
+    If Utilities.FileExists(path) And _
+        ((fileExtension = "gif") Or (fileExtension = "png") Or _
+        (fileExtension = "jpg")) Then
+        Image.Picture = path
+        ImagePath = path
+    Else
+        ImagePath = ""
+        Image.Picture = ""
     End If
 End Sub
