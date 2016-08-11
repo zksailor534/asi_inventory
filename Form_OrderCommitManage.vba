@@ -403,9 +403,6 @@ Private Sub FillFields()
     ElseIf (Status = "X") Then
         LastUser = Nz(rstCommit!OperatorCancel, "")
         LastDate = Nz(rstCommit!DateCancel, "")
-    ElseIf (Status = "P") Then
-        LastUser = Nz(rstCommit!OperatorPicked, "")
-        LastDate = Nz(rstCommit!DatePicked, "")
     ElseIf (Status = "C") Then
         LastUser = Nz(rstCommit!OperatorComplete, "")
         LastDate = Nz(rstCommit!DateComplete, "")
@@ -423,8 +420,6 @@ Private Sub SetTitleStatus()
         Me.lblStatusTitle.Caption = "Active"
     ElseIf Me.Status = "X" Then
         Me.lblStatusTitle.Caption = "Cancelled"
-    ElseIf Me.Status = "P" Then
-        Me.lblStatusTitle.Caption = "Picked"
     ElseIf Me.Status = "C" Then
         Me.lblStatusTitle.Caption = "Completed"
     Else
