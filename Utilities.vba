@@ -3,10 +3,14 @@ Option Compare Database
 '------------------------------------------------------------
 ' American Surplus Inventory Database
 ' Author: Nathanael Greene
-' Current Revision: 2.4.1
-' Revision Date: 03/22/2016
+' Current Revision: 2.4.2
+' Revision Date: 03/24/2016
 '
 ' Revision History:
+'   2.4.2:  New (Utilities, ***Inventory***) Remember last category
+'           New (Utilities, ProductionCommit) Remember commit state
+'           Bug fix (Utilities) Recalculate Commits
+'           Bug fix (***Inventory***) Remove SetScreensize from Form_Open
 '   2.4.1:  New (OrderCommitManage) Add confirmations for all buttons
 '           New (Update) Update form details new features
 '           Bug fix (OrderCommitManage, ProductionCommit) Complete not visible
@@ -82,7 +86,7 @@ Option Compare Database
 ' Global constants
 '
 '------------------------------------------------------------
-Public Const ReleaseVersion As String = "2.4.1"
+Public Const ReleaseVersion As String = "2.4.2"
 ''' User Roles
 Public Const DevelLevel As String = "Devel"
 Public Const AdminLevel As String = "Admin"
@@ -147,6 +151,9 @@ Public EmployeeCategory As String
 Public EmployeeVersion As String
 Public ValidLogin As Boolean
 Public ScreenWidth As Long
+Public searchCategory As String
+Public searchCategoryBottom As String
+Public commitSelectStatus As String
 
 Public Property Get EmployeeID() As Long
     EmployeeID = pvEmployeeID
@@ -243,6 +250,11 @@ On Error GoTo CompleteLogin_Err
         DoCmd.OpenForm UpdateForm, acNormal, "", "", , acDialog
     End If
     SetEmployeeVersion (EmployeeID)
+
+    ' Reset employee use parameters
+    searchCategory = ""
+    searchCategoryBottom = ""
+    commitSelectStatus = ""
 
     DoCmd.OpenForm MainForm
     Forms(MainForm)!lblCurrentEmployeeName.Caption = "Hello, " & EmployeeName
@@ -547,6 +559,11 @@ Public Sub RecalculateCommit()
                 rstInventory!Committed = qty
                 rstInventory.Update
             End If
+        Else
+            ' No active commits exist
+            rstInventory.Edit
+            rstInventory!Committed = 0
+            rstInventory.Update
         End If
         rstInventory.MoveNext
    Next progress_amount
@@ -669,25 +686,19 @@ Public Sub ReclaimRecordIDs()
         ' Check if Record ID has already been reclaimed
         If Not (rstItem!RecordID = "---") Then
 
-            ' Get commit record
-            comQuery = "SELECT TOP 1 * FROM " & CommitDB & " WHERE [ItemID] = " & rstItem!ID
-            Set rstCommit = db.OpenRecordset(comQuery)
+            ' Get inventory/commit record
+            invQuery = "SELECT TOP 1 * FROM " & CommitQuery & " WHERE [ItemID] = " & rstItem!ID
+            Set rstInventory = db.OpenRecordset(invQuery)
 
-            If (rstCommit.RecordCount = 0) Then
-
-                ' Get inventory record
-                invQuery = "SELECT TOP 1 * FROM " & InventoryDB & " WHERE [ItemID] = " & rstItem!ID
-                Set rstInventory = db.OpenRecordset(invQuery)
-
-                If (rstInventory.RecordCount = 0) Then
-                    ' Remove record if no inventory or commit entry exists
-                    rstItem.Delete
-                ElseIf (rstInventory!OnHand = 0) Then
-                    ' Set RecordID to "---" if no quantity remains
-                    rstItem.Edit
-                    rstItem!RecordID = "---"
-                    rstItem.Update
-                End If
+            If (rstInventory.RecordCount = 0) Then
+                ' Remove record if no inventory or commit entry exists
+                rstItem.Delete
+            ElseIf (rstInventory!OnHand = 0) Then
+                ' Set RecordID to "---" if no quantity remains
+                rstItem.Edit
+                rstItem!RecordID = "---"
+                rstItem.Update
+            End If
             End If
         End If
 
