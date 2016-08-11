@@ -315,6 +315,32 @@ Private Function ValidateFields() As Boolean
         End If
     End If
 
+    ' Check for valid Manufacturer
+    If (Len(Manufacturer) > 25) Then
+        Utilities.FieldErrorSet Me.Controls("Manufacturer")
+        ValidateFields = False
+    Else
+        Utilities.FieldErrorClear Me.Controls("Manufacturer")
+    End If
+
+    ' Check for valid Vendor
+    If (Len(Vendor) > 25) Then
+        Utilities.FieldErrorSet Me.Controls("Vendor")
+        ValidateFields = False
+    Else
+        Utilities.FieldErrorClear Me.Controls("Vendor")
+    End If
+
+    ' Check for valid suggested price
+    If (SuggSellingPrice <> "") Then
+        If Not (IsNumeric(SuggSellingPrice)) Then
+            Utilities.FieldErrorSet Me.Controls("SuggSellingPrice")
+            ValidateFields = False
+        Else
+            Utilities.FieldErrorClear Me.Controls("SuggSellingPrice")
+        End If
+    End If
+
 ExitNow:
     Exit Function
 

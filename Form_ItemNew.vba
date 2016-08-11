@@ -3,6 +3,10 @@ Option Compare Database
 Private rstItem As DAO.Recordset
 Private rstNewInventory As DAO.Recordset
 
+Private Sub AmpHR_BeforeUpdate(Cancel As Integer)
+
+End Sub
+
 '------------------------------------------------------------
 ' Form_Load
 '
@@ -157,7 +161,8 @@ Private Sub updateProductList()
 
     CategoryID = Utilities.GetCategoryID(Category)
     If (CategoryID <> 0) Then
-        sqlQuery = "SELECT ProductName FROM " & ProductQuery & " WHERE Category.Value = " & CategoryID
+        sqlQuery = "SELECT ProductName FROM " & ProductQuery & " WHERE Category.Value = " & CategoryID & _
+            " ORDER BY ProductName"
         Product.RowSource = sqlQuery
     End If
 End Sub
@@ -324,6 +329,22 @@ Private Function ValidateFields() As Boolean
         Utilities.FieldErrorClear Me.Controls("RecordID")
     End If
 
+    ' Check for valid Manufacturer
+    If (Len(Manufacturer) > 25) Then
+        Utilities.FieldErrorSet Me.Controls("Manufacturer")
+        ValidateFields = False
+    Else
+        Utilities.FieldErrorClear Me.Controls("Manufacturer")
+    End If
+
+    ' Check for valid Vendor
+    If (Len(Vendor) > 25) Then
+        Utilities.FieldErrorSet Me.Controls("Vendor")
+        ValidateFields = False
+    Else
+        Utilities.FieldErrorClear Me.Controls("Vendor")
+    End If
+
     ' Check for valid suggested price
     If (SuggSellingPrice <> "") Then
         If Not (IsNumeric(SuggSellingPrice)) Then
@@ -345,6 +366,7 @@ End Function
 '
 '------------------------------------------------------------
 Private Sub SaveNewItem()
+On Error GoTo SaveNewItem_Err
     ' Save Item Record
     With rstItem
         .AddNew
@@ -418,6 +440,14 @@ Private Sub SaveNewItem()
     ' Get new record ID
     rstItem.Bookmark = rstItem.LastModified
     ItemID = rstItem("ID")
+
+SaveNewItem_Exit:
+    Exit Sub
+
+SaveNewItem_Err:
+    MsgBox "Error: (" & Err.Number & ") " & Err.Description, vbCritical
+    Resume SaveNewItem_Exit
+
 End Sub
 
 
@@ -426,6 +456,7 @@ End Sub
 '
 '------------------------------------------------------------
 Private Sub SaveReservedItem()
+On Error GoTo SaveReservedItem_Err
     ' Save Item Record
     With rstItem
         .MoveFirst
@@ -498,6 +529,14 @@ Private Sub SaveReservedItem()
     ' Save new item ID for Inventory entry
     rstItem.Bookmark = rstItem.LastModified
     ItemID = rstItem("ID")
+
+SaveReservedItem_Exit:
+    Exit Sub
+
+SaveReservedItem_Err:
+    MsgBox "Error: (" & Err.Number & ") " & Err.Description, vbCritical
+    Resume SaveReservedItem_Exit
+
 End Sub
 
 
@@ -523,6 +562,7 @@ Private Sub SaveInventory()
         !LastDate = Now()
         .Update
     End With
+
 End Sub
 
 
