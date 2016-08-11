@@ -9,6 +9,10 @@ Private Sub Form_Open(Cancel As Integer)
 
     LeftColumns = 6
 
+    ' Set filter
+    Me.Form.Filter = PrintFilter
+    Me.Form.FilterOn = True
+
     ' Set column visibility and order
     For Each formCntrl In Me.Form.Controls
         If formCntrl.ControlType <> acLabel Then

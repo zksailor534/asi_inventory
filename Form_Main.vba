@@ -10,7 +10,7 @@ Private Sub Form_Open(Cancel As Integer)
 
     open_db
     screenSize
-    setUserPermissions
+    UserRoleSettings
 
 End Sub
 
@@ -87,25 +87,31 @@ End Sub
 
 
 '------------------------------------------------------------
-' setUserPermissions
+' UserRoleSettings
 '
 '------------------------------------------------------------
-Private Sub setUserPermissions()
+Private Sub UserRoleSettings()
     If (EmployeeRole = SalesLevel) Then
-        nvbInventory.Enabled = True
-        nvbAdvanced.Visible = False
-        nvbAdvanced.Enabled = False
+        nvbSales.Enabled = True
+        nvbProduction.Enabled = False
+        nvbAdmin.Visible = False
+        nvbAdmin.Enabled = False
     ElseIf (EmployeeRole = ProdLevel) Then
-        nvbInventory.Enabled = True
-        nvbAdvanced.Visible = False
-        nvbAdvanced.Enabled = False
+        Me.nvbProduction.SetFocus
+        SendKeys "{ENTER}", 0
+        nvbSales.Enabled = False
+        nvbProduction.Enabled = True
+        nvbAdmin.Visible = False
+        nvbAdmin.Enabled = False
     ElseIf (EmployeeRole = AdminLevel) Then
-        nvbInventory.Enabled = True
-        nvbAdvanced.Visible = True
-        nvbAdvanced.Enabled = True
+        nvbSales.Enabled = True
+        nvbProduction.Enabled = True
+        nvbAdmin.Visible = True
+        nvbAdmin.Enabled = True
     ElseIf (EmployeeRole = DevelLevel) Then
-        nvbInventory.Enabled = True
-        nvbAdvanced.Visible = True
-        nvbAdvanced.Enabled = True
+        nvbSales.Enabled = True
+        nvbProduction.Enabled = True
+        nvbAdmin.Visible = True
+        nvbAdmin.Enabled = True
     End If
 End Sub

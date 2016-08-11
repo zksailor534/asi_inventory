@@ -3,8 +3,8 @@ Option Compare Database
 '------------------------------------------------------------
 ' American Surplus Inventory Database
 ' Author: Nathanael Greene
-' Current Revision: 2.1.3
-' Revision Date: 10/16/2015
+' Current Revision: 2.2.0
+' Revision Date: 10/17/2015
 '
 ' Revision History:
 '   2.0.0:  Initial Release replaces legacy database
@@ -40,13 +40,17 @@ Option Compare Database
 '           Bug fix (EmployeesDS) - Roles selector not working
 '   2.1.3:  Bug fix (Commit_Complete) - not allowed to complete
 '               when Committed > OnHand (+ Onorder added)
+'   2.2.0:  New: Reorganized program into Sales, Production, Admin
+'               Changed Print Range to print whole screen
+'               Incorporated SW Version recording
+'               Eliminated Subcategory field in Items
 '------------------------------------------------------------
 
 '------------------------------------------------------------
 ' Global constants
 '
 '------------------------------------------------------------
-Public Const ReleaseVersion As String = "2.1.3"
+Public Const ReleaseVersion As String = "2.2.0"
 ''' User Roles
 Public Const DevelLevel As String = "Devel"
 Public Const AdminLevel As String = "Admin"
@@ -69,8 +73,9 @@ Public Const ProductQuery As String = "qrySubProducts"
 ''' Form Names
 Public Const MainForm As String = "Main"
 Public Const LoginForm As String = "Login"
-Public Const InventoryForm As String = "InventoryForm"
-Public Const InventorySearchForm As String = "InventorySearch"
+Public Const SalesForm As String = "SalesForm"
+Public Const SalesSearch As String = "SalesInventory"
+Public Const SalesSearchSplit As String = "SalesInventorySplit"
 Public Const InventoryManageForm As String = "InventoryManage"
 Public Const InventoryOrderForm As String = "InventoryOrder"
 Public Const ItemDetailForm As String = "ItemDetail"
@@ -90,6 +95,7 @@ Public CurrentItemID As Long
 Public CurrentCommitID As Long
 Public CurrentSalesOrder As String
 Public PrintCategorySelected As String
+Public PrintFilter As String
 Public CompanyName As String
 Public CompanyAddress As String
 Public CompanyCity As String
@@ -199,7 +205,7 @@ On Error GoTo CompleteLogin_Err
     DoCmd.OpenForm MainForm
     Forms(MainForm)!lblCurrentEmployeeName.Caption = "Hello, " & EmployeeName
     Forms(MainForm)!lblVersion.Caption = "Version " & ReleaseVersion
-    Forms(MainForm)!nvbInventory.SetFocus
+    SetEmployeeVersion (EmployeeID)
     Err.Clear
 
 CompleteLogin_Exit:
@@ -274,6 +280,28 @@ End Function
 '------------------------------------------------------------
 Private Function GetEmployeeDefaultCategory(ID As Long)
     GetEmployeeDefaultCategory = DLookup("DefaultCategory", EmployeeDB, "[ID]=" & ID)
+End Function
+
+
+'------------------------------------------------------------
+' SetEmployeeVersion
+'
+'------------------------------------------------------------
+Private Function SetEmployeeVersion(ID As Long)
+    Dim rst As DAO.Recordset
+
+    open_db
+    Set rst = db.OpenRecordset("SELECT * FROM " & EmployeeDB & " WHERE [ID]=" & ID)
+
+    ' Set version in Employee DB
+    rst.Edit
+    rst!Version = ReleaseVersion
+    rst.Update
+
+    ' Clean up
+    rst.Close
+    Set rst = Nothing
+
 End Function
 
 
