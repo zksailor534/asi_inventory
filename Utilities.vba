@@ -45,13 +45,15 @@ Option Compare Database
 '               Incorporated SW Version recording
 '               Eliminated Subcategory field in Items
 '   2.2.1:  Bug fix - re-link to database backend
+'   2.2.2:  Bug fix (ProductionInventory) - Fix RecordID Filter
+'               (ItemNew) - Vendor and Manufacturer field limits
 '------------------------------------------------------------
 
 '------------------------------------------------------------
 ' Global constants
 '
 '------------------------------------------------------------
-Public Const ReleaseVersion As String = "2.2.1"
+Public Const ReleaseVersion As String = "2.2.2"
 ''' User Roles
 Public Const DevelLevel As String = "Devel"
 Public Const AdminLevel As String = "Admin"
