@@ -3,8 +3,8 @@ Option Compare Database
 '------------------------------------------------------------
 ' American Surplus Inventory Database
 ' Author: Nathanael Greene
-' Current Revision: 2.1.3
-' Revision Date: 10/16/2015
+' Current Revision: 2.2.0
+' Revision Date: 10/17/2015
 '
 ' Revision History:
 '   2.0.0:  Initial Release replaces legacy database
@@ -40,13 +40,17 @@ Option Compare Database
 '           Bug fix (EmployeesDS) - Roles selector not working
 '   2.1.3:  Bug fix (Commit_Complete) - not allowed to complete
 '               when Committed > OnHand (+ Onorder added)
+'   2.2.0:  New: Reorganized program into Sales, Production, Admin
+'               Changed Print Range to print whole screen
+'               Incorporated SW Version recording
+'               Eliminated Subcategory field in Items
 '------------------------------------------------------------
 
 '------------------------------------------------------------
 ' Global constants
 '
 '------------------------------------------------------------
-Public Const ReleaseVersion As String = "2.1.3"
+Public Const ReleaseVersion As String = "2.2.0"
 ''' User Roles
 Public Const DevelLevel As String = "Devel"
 Public Const AdminLevel As String = "Admin"
