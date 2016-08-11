@@ -3,10 +3,14 @@ Option Compare Database
 '------------------------------------------------------------
 ' American Surplus Inventory Database
 ' Author: Nathanael Greene
-' Current Revision: 2.4.1
-' Revision Date: 03/22/2016
+' Current Revision: 2.4.2
+' Revision Date: 03/24/2016
 '
 ' Revision History:
+'   2.4.2:  New (Utilities, ***Inventory***) Remember last category
+'           New (Utilities, ProductionCommit) Remember commit state
+'           Bug fix (Utilities) Recalculate Commits
+'           Bug fix (***Inventory***) Remove SetScreensize from Form_Open
 '   2.4.1:  New (OrderCommitManage) Add confirmations for all buttons
 '           New (Update) Update form details new features
 '           Bug fix (OrderCommitManage, ProductionCommit) Complete not visible
@@ -82,7 +86,7 @@ Option Compare Database
 ' Global constants
 '
 '------------------------------------------------------------
-Public Const ReleaseVersion As String = "2.4.1"
+Public Const ReleaseVersion As String = "2.4.2"
 ''' User Roles
 Public Const DevelLevel As String = "Devel"
 Public Const AdminLevel As String = "Admin"
@@ -147,6 +151,8 @@ Public EmployeeCategory As String
 Public EmployeeVersion As String
 Public ValidLogin As Boolean
 Public ScreenWidth As Long
+Public searchCategory As String
+Public searchCategoryBottom As String
 Public commitSelectStatus As String
 
 Public Property Get EmployeeID() As Long
@@ -245,7 +251,11 @@ On Error GoTo CompleteLogin_Err
     End If
     SetEmployeeVersion (EmployeeID)
 
+    ' Reset employee use parameters
+    searchCategory = ""
+    searchCategoryBottom = ""
     commitSelectStatus = ""
+
     DoCmd.OpenForm MainForm
     Forms(MainForm)!lblCurrentEmployeeName.Caption = "Hello, " & EmployeeName
     Forms(MainForm)!lblVersion.Caption = "Version " & ReleaseVersion
@@ -549,6 +559,11 @@ Public Sub RecalculateCommit()
                 rstInventory!Committed = qty
                 rstInventory.Update
             End If
+        Else
+            ' No active commits exist
+            rstInventory.Edit
+            rstInventory!Committed = 0
+            rstInventory.Update
         End If
         rstInventory.MoveNext
    Next progress_amount

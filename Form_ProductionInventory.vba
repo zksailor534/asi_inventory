@@ -1,7 +1,8 @@
 Option Compare Database
 Option Explicit
 
-Private searchCategory As String
+'Private searchCategory As String
+
 
 '------------------------------------------------------------
 ' Form_Open
@@ -15,10 +16,14 @@ Private Sub Form_Open(Cancel As Integer)
     DoCmd.Maximize
 
     ' Set selected category
-    If (EmployeeCategory = "") Then
-        CategorySelected = Utilities.SelectFirstCategory
-    Else
+    If (Len(searchCategory) > 0) Then
+        Debug.Print Len(searchCategory), searchCategory
+        CategorySelected = searchCategory
+    ElseIf (Len(EmployeeCategory) > 0) Then
+        Debug.Print Len(EmployeeCategory), EmployeeCategory
         CategorySelected = EmployeeCategory
+    Else
+        CategorySelected = Utilities.SelectFirstCategory
     End If
 
     ' Set the subform properties

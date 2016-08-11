@@ -13,13 +13,22 @@ Private Sub Form_Open(Cancel As Integer)
     ' Maximize the form
     DoCmd.Maximize
 
-    ' Set selected category
-    If (EmployeeCategory = "") Then
-        CategorySelectedTop = Utilities.SelectFirstCategory
-        CategorySelectedBottom = Utilities.SelectFirstCategory
-    Else
+    ' Set selected top category
+    If (Len(searchCategory) > 0) Then
+        CategorySelectedTop = searchCategory
+    ElseIf (Len(EmployeeCategory) > 0) Then
         CategorySelectedTop = EmployeeCategory
+    Else
+        CategorySelectedTop = Utilities.SelectFirstCategory
+    End If
+
+    ' Set selected bottom category
+    If (Len(searchCategoryBottom) > 0) Then
+        CategorySelectedBottom = searchCategoryBottom
+    ElseIf (Len(EmployeeCategory) > 0) Then
         CategorySelectedBottom = EmployeeCategory
+    Else
+        CategorySelectedBottom = Utilities.SelectFirstCategory
     End If
 
     ' Set the subform properties
@@ -71,6 +80,7 @@ Private Sub CategorySelectedTop_AfterUpdate()
     Set subForm = sbfrmInvSearch.Form
 
     ' Engage filter from category selection
+    searchCategory = CategorySelectedTop
     subForm.Filter = "[Category]= '" & CategorySelectedTop & "' AND [OnHand] > 0"
     subForm.FilterOn = True
 
@@ -96,6 +106,7 @@ Private Sub CategorySelectedBottom_AfterUpdate()
     Set subForm = sbfrmInvSearchBottom.Form
 
     ' Engage filter from category selection
+    searchCategoryBottom = CategorySelectedBottom
     subForm.Filter = "[Category]= '" & CategorySelectedBottom & "' AND [OnHand] > 0"
     subForm.FilterOn = True
 
