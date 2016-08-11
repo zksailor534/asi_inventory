@@ -26,7 +26,6 @@ Private Sub Form_Open(Cancel As Integer)
 
     ' Set screen view properties
     subForm.DatasheetFontHeight = 10
-    SetScreenSize
 
     ' Set visibility for the extra fields in warehouse portion of query
     subForm.Controls("CreateDate").ColumnHidden = True
