@@ -669,25 +669,19 @@ Public Sub ReclaimRecordIDs()
         ' Check if Record ID has already been reclaimed
         If Not (rstItem!RecordID = "---") Then
 
-            ' Get commit record
-            comQuery = "SELECT TOP 1 * FROM " & CommitDB & " WHERE [ItemID] = " & rstItem!ID
-            Set rstCommit = db.OpenRecordset(comQuery)
+            ' Get inventory/commit record
+            invQuery = "SELECT TOP 1 * FROM " & CommitQuery & " WHERE [ItemID] = " & rstItem!ID
+            Set rstInventory = db.OpenRecordset(invQuery)
 
-            If (rstCommit.RecordCount = 0) Then
-
-                ' Get inventory record
-                invQuery = "SELECT TOP 1 * FROM " & InventoryDB & " WHERE [ItemID] = " & rstItem!ID
-                Set rstInventory = db.OpenRecordset(invQuery)
-
-                If (rstInventory.RecordCount = 0) Then
-                    ' Remove record if no inventory or commit entry exists
-                    rstItem.Delete
-                ElseIf (rstInventory!OnHand = 0) Then
-                    ' Set RecordID to "---" if no quantity remains
-                    rstItem.Edit
-                    rstItem!RecordID = "---"
-                    rstItem.Update
-                End If
+            If (rstInventory.RecordCount = 0) Then
+                ' Remove record if no inventory or commit entry exists
+                rstItem.Delete
+            ElseIf (rstInventory!OnHand = 0) Then
+                ' Set RecordID to "---" if no quantity remains
+                rstItem.Edit
+                rstItem!RecordID = "---"
+                rstItem.Update
+            End If
             End If
         End If
 
