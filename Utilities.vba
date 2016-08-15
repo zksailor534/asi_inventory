@@ -3,10 +3,12 @@ Option Compare Database
 '------------------------------------------------------------
 ' American Surplus Inventory Database
 ' Author: Nathanael Greene
-' Current Revision: 2.5.1
-' Revision Date: 05/05/2016
+' Current Revision: 2.5.2
+' Revision Date: 05/09/2016
 '
 ' Revision History:
+'   2.5.2:  New (Utilities) Message to upgrade on login
+'           Bug fix: (Utilities) IsFileName wrong variable 'path' -> 'strFile'
 '   2.5.1:  Bug fix: (*) Set SetScreenSize subroutine to Public
 '   2.5.0:  New (ItemNew, Utilities) Disable ItemNew fields based on product
 '           New (ProductionCommit, SalesCommit) '* All' based on filtered view
@@ -92,7 +94,7 @@ Option Compare Database
 ' Global constants
 '
 '------------------------------------------------------------
-Public Const ReleaseVersion As String = "2.5.1"
+Public Const ReleaseVersion As String = "2.5.2"
 ''' User Roles
 Public Const DevelLevel As String = "Devel"
 Public Const AdminLevel As String = "Admin"
@@ -148,6 +150,7 @@ Public CompanyEmail As String
 Public CompanyWebsite As String
 Public CompanyPhone As String
 Public CompanyFax As String
+Public CompanyVersion As String
 Private pvEmployeeID As Long
 Public EmployeeName As String
 Public EmployeeLogin As String
@@ -203,6 +206,7 @@ On Error GoTo LoadSettings_Err
     CompanyWebsite = Nz(DLookup("WebPage", SettingsDB, "[Company]='" & Company & "'"), "")
     CompanyPhone = Nz(DLookup("BusinessPhone", SettingsDB, "[Company]='" & Company & "'"), "")
     CompanyFax = Nz(DLookup("BusinessFax", SettingsDB, "[Company]='" & Company & "'"), "")
+    CompanyVersion = Nz(DLookup("Build", SettingsDB, "[Company]='" & Company & "'"), "")
 
 LoadSettings_Exit:
     Exit Sub
@@ -253,10 +257,7 @@ On Error GoTo CompleteLogin_Err
     DoCmd.Close acForm, MainForm, acSaveNo
 
     ' Check for update
-    If (EmployeeVersion <> ReleaseVersion) Then
-        DoCmd.OpenForm UpdateForm, acNormal, "", "", , acDialog
-    End If
-    SetEmployeeVersion (EmployeeID)
+    VersionCheck
 
     ' Reset employee use parameters
     searchCategory = ""
@@ -350,6 +351,45 @@ End Function
 Private Function GetEmployeeVersion(ID As Long)
     GetEmployeeVersion = DLookup("Version", EmployeeDB, "[ID]=" & ID)
 End Function
+
+
+'------------------------------------------------------------
+' VersionCheck
+'
+'------------------------------------------------------------
+Public Sub VersionCheck()
+On Error GoTo VersionCheck_Err
+
+    Dim updateNow As Integer
+    Dim upgradeLoc As String
+
+    upgradeLoc = "F:\data\ACCESS"
+
+    ' Running updated version
+    If (ReleaseVersion <> CompanyVersion) Then
+        updateNow = MsgBox("Running outdated version" & vbCrLf & _
+            "Current Version is: " & CompanyVersion & vbCrLf & vbCrLf & _
+            "Would you like to upgrade now?", vbYesNo, "Update Version")
+
+        If updateNow = vbYes Then
+            DoCmd.Close acForm, "Main"
+            Shell "C:\WINDOWS\explorer.exe """ & upgradeLoc & "", vbNormalFocus
+            DoCmd.Quit
+        End If
+
+    ElseIf (EmployeeVersion <> ReleaseVersion) Then
+        DoCmd.OpenForm UpdateForm, acNormal, "", "", , acDialog
+    End If
+    SetEmployeeVersion (EmployeeID)
+
+VersionCheck_Exit:
+    Exit Sub
+
+VersionCheck_Err:
+    MsgBox "Error: (" & Err.Number & ") " & Err.Description, vbCritical
+    Resume VersionCheck_Exit
+
+End Sub
 
 
 '------------------------------------------------------------
@@ -1364,7 +1404,7 @@ Function IsFileName(ByVal strFile As String) As Boolean
     'Purpose:   Return True if the input string has a file extension
     'Arguments: strFile: File name to look at
 
-    IsFileName = (Len(Right$(path, Len(path) - InStrRev(path, "."))) > 0)
+    IsFileName = (Len(Right$(strFile, Len(strFile) - InStrRev(strFile, "."))) > 0)
 End Function
 
 
