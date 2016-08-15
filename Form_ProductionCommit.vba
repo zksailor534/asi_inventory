@@ -30,8 +30,8 @@ Private Sub Form_Open(Cancel As Integer)
     Me.sbfrmOrderSearch.Form.OrderBy = "DateActive DESC"
     Me.sbfrmOrderSearch.Form.FilterOn = True
 
-    ' Set user role properties
-    UserRoleProperties (EmployeeRole)
+    ' Set button status according to commit view
+    ButtonStatus StatusSelect
 
 outNow:
     SalesOrderFiltered.SetFocus
@@ -94,6 +94,7 @@ Private Sub StatusSelect_AfterUpdate()
     Me.sbfrmOrderSearch.Form.Filter = GetFilter(EmployeeRole, SalesOrderFiltered, StatusSelect)
     Me.sbfrmOrderSearch.Form.FilterOn = True
     Me.sbfrmOrderSearch.Form.Requery
+    ButtonStatus StatusSelect
 End Sub
 
 
@@ -313,33 +314,32 @@ End Function
 
 
 '------------------------------------------------------------
-' UserRoleProperties
+' ButtonStatus
 '
 '------------------------------------------------------------
-Private Sub UserRoleProperties(Role As String)
+Private Sub ButtonStatus(Status As String)
     On Error Resume Next
 
-    If (Role = SalesLevel) Then
-        ' Hide Complete Commit button for salespeople
-        CancelCommitButton.Visible = True
+    ' Active
+    If (Status = "Active") Then
         CancelCommitButton.Enabled = True
-        ReactivateCommitButton.Visible = False
         ReactivateCommitButton.Enabled = False
-        CompleteCommitButton.Visible = False
-        CompleteCommitButton.Enabled = False
-    ElseIf (Role = ProdLevel) Then
-        CancelCommitButton.Visible = True
-        CancelCommitButton.Enabled = True
-        ReactivateCommitButton.Visible = True
-        ReactivateCommitButton.Enabled = True
-        CompleteCommitButton.Visible = True
         CompleteCommitButton.Enabled = True
-    Else
-        CancelCommitButton.Visible = True
-        CancelCommitButton.Enabled = True
-        ReactivateCommitButton.Visible = True
+    ' Complete
+    ElseIf (Status = "Complete") Then
+        CancelCommitButton.Enabled = False
         ReactivateCommitButton.Enabled = True
-        CompleteCommitButton.Visible = True
+        CompleteCommitButton.Enabled = False
+    ' Cancelled
+    ElseIf (Status = "Cancelled") Then
+        CancelCommitButton.Enabled = False
+        ReactivateCommitButton.Enabled = True
+        CompleteCommitButton.Enabled = False
+    ' All
+    ElseIf (Status = "All") Then
+        CancelCommitButton.Enabled = True
+        ReactivateCommitButton.Enabled = True
         CompleteCommitButton.Enabled = True
     End If
+
 End Sub

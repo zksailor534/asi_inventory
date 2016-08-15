@@ -17,6 +17,7 @@ Private Sub Form_Open(Cancel As Integer)
 
     ' Default is only active commits
     ActiveToggle.Value = True
+    ButtonStatus
     Me.sbfrmOrderSearch.Form.Controls("Status").ColumnHidden = True
 
     ' Engage filter from Committed status
@@ -88,8 +89,10 @@ Private Sub ActiveToggle_Click()
 
     If (ActiveToggle.Value = True) Then
         Me.sbfrmOrderSearch.Form.Controls("Status").ColumnHidden = True
+        ButtonStatus
     Else
         Me.sbfrmOrderSearch.Form.Controls("Status").ColumnHidden = False
+        ButtonStatus
     End If
 
     Me.sbfrmOrderSearch.Form.Filter = GetFilter(EmployeeRole, SalesOrderFiltered)
@@ -236,3 +239,21 @@ Private Function GetFilter(Role As String, Order As String) As String
         GetFilter = "[Reference]= '" & Order & "'"
     End If
 End Function
+
+
+'------------------------------------------------------------
+' ButtonStatus
+'
+'------------------------------------------------------------
+Private Sub ButtonStatus()
+    On Error Resume Next
+
+    ' Active
+    If (ActiveToggle.Value = True) Then
+        CancelCommitButton.Enabled = True
+    ' Complete
+    Else
+        CancelCommitButton.Enabled = False
+    End If
+
+End Sub
