@@ -62,10 +62,12 @@ End Sub
 '
 '------------------------------------------------------------
 Private Sub Form_Resize()
+On Error Resume Next
     ScreenWidth = Round(Me.WindowWidth - 325)
     If Utilities.ProcedureExists(Me!NavigationSubform.Form!NavigationSubform.Form, "SetScreenSize") Then
-        Me!NavigationSubform.Form!NavigationSubform.Form.SetScreenSize
+         Me!NavigationSubform.Form!NavigationSubform.Form.SetScreenSize
     End If
+
 End Sub
 
 

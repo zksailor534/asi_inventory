@@ -265,7 +265,7 @@ End Sub
 ' SetScreenSize
 '
 '------------------------------------------------------------
-Private Sub SetScreenSize()
+Public Sub SetScreenSize()
     Me.sbfrmOrderSearch.Left = 0
     Me.sbfrmOrderSearch.Top = 0
     Me.sbfrmOrderSearch.Width = ScreenWidth

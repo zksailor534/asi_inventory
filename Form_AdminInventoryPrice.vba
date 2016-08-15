@@ -127,7 +127,7 @@ End Sub
 ' SetScreenSize
 '
 '------------------------------------------------------------
-Private Sub SetScreenSize()
+Public Sub SetScreenSize()
     On Error Resume Next
     Me.sbfrmInvPrice.Left = 0
     Me.sbfrmInvPrice.Top = 0

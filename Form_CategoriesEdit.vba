@@ -240,7 +240,7 @@ End Sub
 ' SetScreenSize
 '
 '------------------------------------------------------------
-Private Sub SetScreenSize()
+Public Sub SetScreenSize()
     On Error Resume Next
     Me.sbfrmDS.Left = 0
     Me.sbfrmDS.Top = 0
