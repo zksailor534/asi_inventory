@@ -103,11 +103,13 @@ Private Sub IDFilterButton_Click()
     Else
         If ValidRecordID(RecordIDFilter) Then
             ' Engage filter from RecordID selection
-            Me.sbfrmInvSearch.Form.Filter = "[Category]='" & searchCategory & "' AND [OnHand]>0" & _
-                " AND [RecordID] = '" & RecordIDFilter & "'"
+            Me.sbfrmInvSearch.Form.Filter = "[RecordID] = '" & RecordIDFilter & "'"
             Me.sbfrmInvSearch.Form.FilterOn = True
             Me.sbfrmInvSearch.Form.Requery
             CurrentItemID = GetRecordItemID(RecordIDFilter)
+            ' Set category to current item
+            searchCategory = GetItemCategory(CurrentItemID)
+            CategorySelected = searchCategory
         Else
             RecordIDFilter = ""
             RecordIDFilter.SetFocus
@@ -319,8 +321,7 @@ End Sub
 '------------------------------------------------------------
 Private Function ValidRecordID(RecordID As String) As Boolean
     On Error Resume Next
-    If Not (IsNull(DLookup("RecordID", WarehouseQuery, "[Category]= '" & searchCategory & _
-        "' AND [RecordID]='" & RecordID & "'"))) Then
+    If Not (IsNull(DLookup("RecordID", WarehouseQuery, "[RecordID]='" & RecordID & "'"))) Then
         ValidRecordID = True
     Else
         MsgBox "Invalid Record ID: Not Found", vbOKOnly, "Invalid Record ID"
@@ -338,11 +339,28 @@ Private Function GetRecordItemID(RecordID As String) As Long
 
     Dim ItemID As Long
 
-    ItemID = DLookup("ID", WarehouseQuery, "[Category]= '" & searchCategory & _
-        "' AND [RecordID]='" & RecordID & "'")
+    ItemID = DLookup("ID", WarehouseQuery, "[RecordID]='" & RecordID & "'")
     If Not (IsNull(ItemID)) Then
         GetRecordItemID = ItemID
     Else
         GetRecordItemID = 0
+    End If
+End Function
+
+
+'------------------------------------------------------------
+' GetItemCategory
+'
+'------------------------------------------------------------
+Private Function GetItemCategory(ItemID As Long) As String
+    On Error Resume Next
+
+    Dim Category As String
+
+    Category = DLookup("Category", WarehouseQuery, "[ID]=" & ItemID)
+    If Not (IsNull(Category)) Then
+        GetItemCategory = Category
+    Else
+        GetItemCategory = ""
     End If
 End Function
