@@ -3,10 +3,15 @@ Option Compare Database
 '------------------------------------------------------------
 ' American Surplus Inventory Database
 ' Author: Nathanael Greene
-' Current Revision: 2.4.2
-' Revision Date: 03/24/2016
+' Current Revision: 2.5.0
+' Revision Date: 04/26/2016
 '
 ' Revision History:
+'   2.5.0:  New (ItemNew, Utilities) Disable ItemNew fields based on product
+'           New (ProductionCommit, SalesCommit) '* All' based on filtered view
+'           New (ProductionCommit, SalesCommit) Disable '* All' buttons based on commit view
+'           Bug fix (***Inventory***) Fix SetScreensize
+'           Bug fix (Utilities) Fix Reclaim Record IDs
 '   2.4.2:  New (Utilities, ***Inventory***) Remember last category
 '           New (Utilities, ProductionCommit) Remember commit state
 '           Bug fix (Utilities) Recalculate Commits
@@ -86,7 +91,7 @@ Option Compare Database
 ' Global constants
 '
 '------------------------------------------------------------
-Public Const ReleaseVersion As String = "2.4.2"
+Public Const ReleaseVersion As String = "2.5.0"
 ''' User Roles
 Public Const DevelLevel As String = "Devel"
 Public Const AdminLevel As String = "Admin"
