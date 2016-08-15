@@ -1364,7 +1364,7 @@ Function IsFileName(ByVal strFile As String) As Boolean
     'Purpose:   Return True if the input string has a file extension
     'Arguments: strFile: File name to look at
 
-    IsFileName = (Len(Right$(path, Len(path) - InStrRev(path, "."))) > 0)
+    IsFileName = (Len(Right$(strFile, Len(strFile) - InStrRev(strFile, "."))) > 0)
 End Function
 
 
