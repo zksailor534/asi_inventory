@@ -148,6 +148,7 @@ Private Sub Product_AfterUpdate()
         ProductNameHeader = Product
         updateStyleList
         updateColumnList
+        UpdateFieldVisibility
     End If
 End Sub
 
@@ -163,7 +164,6 @@ Private Sub updateProductList()
     CategoryID = Utilities.GetCategoryID(Category)
     If (CategoryID <> 0) Then
         sqlQuery = "SELECT ProductName FROM " & ProductQuery & " WHERE Category.Value = " & CategoryID
-        Debug.Print sqlQuery
         Product.RowSource = sqlQuery
     Else
         Product.RowSource = ""
@@ -237,6 +237,7 @@ Private Sub FillFields()
     If (Product <> "") Then
         updateStyleList
         updateColumnList
+        UpdateFieldVisibility
     End If
 
     Category = Nz(rstItem!Category, "")
@@ -503,4 +504,22 @@ Private Sub DisplayImage(path As String)
         ImagePath = ""
         Image.Picture = ""
     End If
+End Sub
+
+
+'------------------------------------------------------------
+' UpdateFieldVisibility
+'
+'------------------------------------------------------------
+Private Sub UpdateFieldVisibility()
+    Dim sqlQuery As String
+    Dim formCntrl As Control
+
+    ' Set column visibility and order
+    For Each formCntrl In Me.Controls
+        If (formCntrl.ControlType = acComboBox) Or (formCntrl.ControlType = acTextBox) Or _
+            (formCntrl.ControlType = acCheckBox) Then
+            formCntrl.Enabled = Utilities.ProductFieldVisibility(Product, formCntrl.Name)
+        End If
+    Next
 End Sub

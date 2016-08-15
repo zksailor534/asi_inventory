@@ -432,6 +432,61 @@ End Function
 
 
 '------------------------------------------------------------
+' ProductFieldVisibility
+'
+'------------------------------------------------------------
+Public Function ProductFieldVisibility(ProductName As String, fieldName As String) As Boolean
+    Dim rst As DAO.Recordset
+    Dim ii, fCount As Integer
+
+    ProductFieldVisibility = True
+    open_db
+
+    'Debug.Print IsVarArrayEmpty(ProductFields)
+    If IsVarArrayEmpty(ProductFields) Then
+        Set rst = db.OpenRecordset("SELECT TOP 1 * FROM " & ProductDB)
+
+        ' Define number of Product Fields
+        fCount = 0
+        For ii = 0 To rst.Fields.count - 1
+            If (rst.Fields(ii).Type = 1) Then
+                fCount = fCount + 1
+            End If
+        Next ii
+        ReDim ProductFields(fCount - 1)
+
+        ' Fill array of Product Fields
+        fCount = 0
+        For ii = 0 To rst.Fields.count - 1
+            If (rst.Fields(ii).Type = 1) Then
+                ProductFields(fCount) = rst.Fields(ii).Name
+                fCount = fCount + 1
+            End If
+        Next ii
+
+        rst.Close
+        Set rst = Nothing
+    End If
+
+    Set rst = db.OpenRecordset("SELECT TOP 1 * FROM " & ProductDB & " WHERE [ProductName]='" & ProductName & "'")
+    For ii = 0 To UBound(ProductFields)
+        If (ProductFields(ii) = fieldName) Then
+            If (rst(fieldName) = True) Then
+                ProductFieldVisibility = True
+                Exit For
+            ElseIf (rst(fieldName) = False) Then
+                ProductFieldVisibility = False
+                Exit For
+            End If
+        End If
+    Next ii
+    rst.Close
+    Set rst = Nothing
+
+End Function
+
+
+'------------------------------------------------------------
 ' NewRecordID
 '
 '------------------------------------------------------------
