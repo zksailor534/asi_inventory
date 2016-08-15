@@ -129,36 +129,41 @@ Private Sub CancelCommitButton_Click()
     Dim decommitAll As Integer
 
     If (EmployeeRole = SalesLevel) Then
-        If EmployeeLogin <> SalesOrderUser(CurrentSalesOrder) Then
-            MsgBox "Invalid User:" & vbCrLf & "Unable to edit Commit of other user", , "Invalid User"
-            Exit Sub
-        End If
+        MsgBox "Invalid User:" & vbCrLf & "Not authorized to Cancel Commitment", , "Invalid User"
+        Exit Sub
     End If
 
-    If CurrentSalesOrder <> "" Then
-        decommitAll = MsgBox("Do you want to Cancel commitments for ALL items in Sales Order " & CurrentSalesOrder _
-            & "?", vbYesNo, "Decommit All Items")
+    open_db
+    Set rstCommit = db.OpenRecordset("SELECT * FROM " & CommitQuery & _
+        " WHERE " & sbfrmOrderSearch.Form.Filter)
+
+    If (Utilities.RecordCheck(rstCommit, "Reference", CurrentSalesOrder)) And _
+        (Utilities.RecordCheck(rstCommit, "Status", "A")) Then
+
+        decommitAll = MsgBox("Do you want to cancel ALL commitments in current view?", _
+            vbYesNo, "Cancel Items")
 
         If decommitAll = vbNo Then
-           Exit Sub
+           GoTo CancelCommitButton_Click_Exit
         ElseIf decommitAll = vbYes Then
-            open_db
-            Set rstCommit = db.OpenRecordset("SELECT * FROM " & CommitQuery & _
-                " WHERE [Reference] = '" & CurrentSalesOrder & "' AND [Status] IN ('A')")
             Call Utilities.Commit_Cancel(rstCommit)
 
             Utilities.OperationEntry rstCommit!ID, "Commit", _
-                "Cancelled All Commitments from Sales Order " & CurrentSalesOrder
+                "Cancelled Commitments from Sales Order " & CurrentSalesOrder
 
-            rstCommit.Close
-            Set rstCommit = Nothing
             Me.sbfrmOrderSearch.Form.Requery
         End If
     Else
-        MsgBox "No Sales Order Selected", , "Invalid Sales Order"
-        Exit Sub
+        MsgBox "Invalid Selection:" & vbCrLf & _
+            " - Select single sales order" & vbCrLf & _
+            " - Status must be Active", , "Invalid Sales Order"
+        GoTo CancelCommitButton_Click_Exit
     End If
-    Me.sbfrmOrderSearch.Form.Requery
+
+CancelCommitButton_Click_Exit:
+    rstCommit.Close
+    Set rstCommit = Nothing
+
 End Sub
 
 
@@ -171,33 +176,41 @@ Private Sub ReactivateCommitButton_Click()
     Dim reactivateAll As Integer
 
     If (EmployeeRole = SalesLevel) Then
-        MsgBox "Invalid User:" & vbCrLf & "Not allowed to Reactivate Commitment", , "Invalid User"
+        MsgBox "Invalid User:" & vbCrLf & "Not authorized to Reactivate Commitment", , "Invalid User"
         Exit Sub
     End If
 
-    If CurrentSalesOrder <> "" Then
-        reactivateAll = MsgBox("Do you want to reactivate ALL commitments in Sales Order " & CurrentSalesOrder _
-            & "?", vbYesNo, "Reactivate All Items")
+    open_db
+    Set rstCommit = db.OpenRecordset("SELECT * FROM " & CommitQuery & _
+        " WHERE " & sbfrmOrderSearch.Form.Filter)
+
+    If (Utilities.RecordCheck(rstCommit, "Reference", CurrentSalesOrder)) And _
+        Not (Utilities.RecordCheck(rstCommit, "Status", "A")) Then
+
+        reactivateAll = MsgBox("Do you want to reactivate ALL commitments in current view?", _
+            vbYesNo, "Reactivate Items")
 
         If reactivateAll = vbNo Then
-           Exit Sub
+           GoTo ReactivateCommitButton_Click_Exit
         ElseIf reactivateAll = vbYes Then
-            open_db
-            Set rstCommit = db.OpenRecordset("SELECT * FROM " & CommitQuery & _
-                " WHERE [Reference] = '" & CurrentSalesOrder & "' AND [Status] IN ('C','X')")
             Call Utilities.Commit_Reactivate(rstCommit)
 
             Utilities.OperationEntry rstCommit!ID, "Commit", _
-                "Reactivated All Commitments from Sales Order " & CurrentSalesOrder
+                "Reactivated Commitments from Sales Order " & CurrentSalesOrder
 
-            rstCommit.Close
-            Set rstCommit = Nothing
             Me.sbfrmOrderSearch.Form.Requery
         End If
     Else
-        MsgBox "No Sales Order Selected", , "Invalid Sales Order"
-        Exit Sub
+        MsgBox "Invalid Selection:" & vbCrLf & _
+            " - Select single sales order" & vbCrLf & _
+            " - Status cannot be Active", , "Invalid Sales Order"
+        GoTo ReactivateCommitButton_Click_Exit
     End If
+
+ReactivateCommitButton_Click_Exit:
+    rstCommit.Close
+    Set rstCommit = Nothing
+
 End Sub
 
 
@@ -210,35 +223,40 @@ Private Sub CompleteCommitButton_Click()
     Dim completeAll As Integer
 
     If (EmployeeRole = SalesLevel) Then
-        MsgBox "Invalid User:" & vbCrLf & "Unable to Complete Commit", , "Invalid User"
+        MsgBox "Invalid User:" & vbCrLf & "Not authorized to Complete Commitment", , "Invalid User"
         Exit Sub
     End If
 
-    If CurrentSalesOrder <> "" Then
-        completeAll = MsgBox("Do you want to Complete commitments for ALL items in Sales Order " & CurrentSalesOrder _
-            & "?", vbYesNo, "Complete All Items")
+    open_db
+    Set rstCommit = db.OpenRecordset("SELECT * FROM " & CommitQuery & _
+        " WHERE " & sbfrmOrderSearch.Form.Filter)
+
+    If (Utilities.RecordCheck(rstCommit, "Reference", CurrentSalesOrder)) And _
+        (Utilities.RecordCheck(rstCommit, "Status", "A")) Then
+
+        completeAll = MsgBox("Do you want to complete ALL commitments in current view?", _
+            vbYesNo, "Complete Items")
 
         If completeAll = vbNo Then
-           Exit Sub
+           GoTo CompleteCommitButton_Click_Exit
         ElseIf completeAll = vbYes Then
-            open_db
-            Set rstCommit = db.OpenRecordset("SELECT * FROM " & CommitQuery & _
-                " WHERE [Reference] = '" & CurrentSalesOrder & "' AND [Status] = 'A'")
             Call Utilities.Commit_Complete(rstCommit)
 
             Utilities.OperationEntry rstCommit!ID, "Commit", _
-                "Completed All Commitments from Sales Order " & CurrentSalesOrder
+                "Completed Commitments from Sales Order " & CurrentSalesOrder
 
-            rstCommit.Close
-            Set rstCommit = Nothing
             Me.sbfrmOrderSearch.Form.Requery
         End If
     Else
-        MsgBox "No Sales Order Selected", , "Invalid Sales Order"
-        Exit Sub
+        MsgBox "Invalid Selection:" & vbCrLf & _
+            " - Select single sales order" & vbCrLf & _
+            " - Status must be Active", , "Invalid Sales Order"
+        GoTo CompleteCommitButton_Click_Exit
     End If
-End Sub
 
+CompleteCommitButton_Click_Exit:
+    rstCommit.Close
+    Set rstCommit = Nothing
 
 End Sub
 
