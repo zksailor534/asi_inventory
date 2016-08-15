@@ -288,7 +288,7 @@ End Sub
 ' SetScreenSize
 '
 '------------------------------------------------------------
-Private Sub SetScreenSize()
+Public Sub SetScreenSize()
     Me.sbfrmDS.Left = 0
     Me.sbfrmDS.Top = 0
     Me.sbfrmDS.Width = ScreenWidth

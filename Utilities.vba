@@ -3,10 +3,11 @@ Option Compare Database
 '------------------------------------------------------------
 ' American Surplus Inventory Database
 ' Author: Nathanael Greene
-' Current Revision: 2.5.0
-' Revision Date: 04/26/2016
+' Current Revision: 2.5.1
+' Revision Date: 05/05/2016
 '
 ' Revision History:
+'   2.5.1:  Bug fix: (*) Set SetScreenSize subroutine to Public
 '   2.5.0:  New (ItemNew, Utilities) Disable ItemNew fields based on product
 '           New (ProductionCommit, SalesCommit) '* All' based on filtered view
 '           New (ProductionCommit, SalesCommit) Disable '* All' buttons based on commit view
@@ -91,7 +92,7 @@ Option Compare Database
 ' Global constants
 '
 '------------------------------------------------------------
-Public Const ReleaseVersion As String = "2.5.0"
+Public Const ReleaseVersion As String = "2.5.1"
 ''' User Roles
 Public Const DevelLevel As String = "Devel"
 Public Const AdminLevel As String = "Admin"

@@ -174,7 +174,7 @@ End Sub
 ' SetScreenSize
 '
 '------------------------------------------------------------
-Private Sub SetScreenSize()
+Public Sub SetScreenSize()
     On Error Resume Next
     Me.sbfrmOrderSearch.Left = 0
     Me.sbfrmOrderSearch.Top = 0

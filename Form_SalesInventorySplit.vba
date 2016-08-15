@@ -36,6 +36,7 @@ Private Sub Form_Open(Cancel As Integer)
     Set subForm2 = sbfrmInvSearchBottom.Form
 
     ' Set screen view properties
+    SetScreenSize
     subForm1.DatasheetFontHeight = 10
     subForm2.DatasheetFontHeight = 10
 
@@ -159,8 +160,7 @@ End Sub
 ' SetScreenSize
 '
 '------------------------------------------------------------
-Private Sub SetScreenSize()
-    On Error Resume Next
+Public Sub SetScreenSize()
     ' Top datasheet
     Me.sbfrmInvSearch.Left = 0
     Me.sbfrmInvSearch.Top = 0
@@ -173,6 +173,7 @@ Private Sub SetScreenSize()
     Me.sbfrmInvSearchBottom.Height = Round(Me.WindowHeight * 0.95) / 2
     ' Divider line
     Me.lineDivider.Top = Round(Me.WindowHeight * 0.95) / 2 + 55
+    Me.lineDivider.Width = ScreenWidth
 End Sub
 
 
