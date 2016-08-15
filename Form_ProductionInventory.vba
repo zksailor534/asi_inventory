@@ -1,8 +1,6 @@
 Option Compare Database
 Option Explicit
 
-'Private searchCategory As String
-
 
 '------------------------------------------------------------
 ' Form_Open
@@ -17,10 +15,8 @@ Private Sub Form_Open(Cancel As Integer)
 
     ' Set selected category
     If (Len(searchCategory) > 0) Then
-        Debug.Print Len(searchCategory), searchCategory
         CategorySelected = searchCategory
     ElseIf (Len(EmployeeCategory) > 0) Then
-        Debug.Print Len(EmployeeCategory), EmployeeCategory
         CategorySelected = EmployeeCategory
     Else
         CategorySelected = Utilities.SelectFirstCategory
@@ -31,6 +27,7 @@ Private Sub Form_Open(Cancel As Integer)
 
     ' Set screen view properties
     subForm.DatasheetFontHeight = 10
+    SetScreenSize
 
     ' Set visibility for the extra fields in warehouse portion of query
     subForm.Controls("CreateDate").ColumnHidden = True
@@ -245,23 +242,13 @@ End Sub
 
 
 '------------------------------------------------------------
-' Form_Resize
-'
-'------------------------------------------------------------
-Private Sub Form_Resize()
-    SetScreenSize
-End Sub
-
-
-'------------------------------------------------------------
 ' SetScreenSize
 '
 '------------------------------------------------------------
-Private Sub SetScreenSize()
-    On Error Resume Next
+Public Sub SetScreenSize()
     Me.sbfrmInvSearch.Left = 0
     Me.sbfrmInvSearch.Top = 0
-    Me.sbfrmInvSearch.Width = Round(Me.WindowWidth)
+    Me.sbfrmInvSearch.Width = ScreenWidth
     Me.sbfrmInvSearch.Height = Round(Me.WindowHeight * 0.95)
 End Sub
 

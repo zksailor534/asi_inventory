@@ -3,10 +3,15 @@ Option Compare Database
 '------------------------------------------------------------
 ' American Surplus Inventory Database
 ' Author: Nathanael Greene
-' Current Revision: 2.4.2
-' Revision Date: 03/24/2016
+' Current Revision: 2.5.0
+' Revision Date: 04/26/2016
 '
 ' Revision History:
+'   2.5.0:  New (ItemNew, Utilities) Disable ItemNew fields based on product
+'           New (ProductionCommit, SalesCommit) '* All' based on filtered view
+'           New (ProductionCommit, SalesCommit) Disable '* All' buttons based on commit view
+'           Bug fix (***Inventory***) Fix SetScreensize
+'           Bug fix (Utilities) Fix Reclaim Record IDs
 '   2.4.2:  New (Utilities, ***Inventory***) Remember last category
 '           New (Utilities, ProductionCommit) Remember commit state
 '           Bug fix (Utilities) Recalculate Commits
@@ -86,7 +91,7 @@ Option Compare Database
 ' Global constants
 '
 '------------------------------------------------------------
-Public Const ReleaseVersion As String = "2.4.2"
+Public Const ReleaseVersion As String = "2.5.0"
 ''' User Roles
 Public Const DevelLevel As String = "Devel"
 Public Const AdminLevel As String = "Admin"
@@ -154,6 +159,7 @@ Public ScreenWidth As Long
 Public searchCategory As String
 Public searchCategoryBottom As String
 Public commitSelectStatus As String
+Public ProductFields() As String
 
 Public Property Get EmployeeID() As Long
     EmployeeID = pvEmployeeID
@@ -432,6 +438,61 @@ End Function
 
 
 '------------------------------------------------------------
+' ProductFieldVisibility
+'
+'------------------------------------------------------------
+Public Function ProductFieldVisibility(ProductName As String, fieldName As String) As Boolean
+    Dim rst As DAO.Recordset
+    Dim ii, fCount As Integer
+
+    ProductFieldVisibility = True
+    open_db
+
+    'Debug.Print IsVarArrayEmpty(ProductFields)
+    If IsVarArrayEmpty(ProductFields) Then
+        Set rst = db.OpenRecordset("SELECT TOP 1 * FROM " & ProductDB)
+
+        ' Define number of Product Fields
+        fCount = 0
+        For ii = 0 To rst.Fields.count - 1
+            If (rst.Fields(ii).Type = 1) Then
+                fCount = fCount + 1
+            End If
+        Next ii
+        ReDim ProductFields(fCount - 1)
+
+        ' Fill array of Product Fields
+        fCount = 0
+        For ii = 0 To rst.Fields.count - 1
+            If (rst.Fields(ii).Type = 1) Then
+                ProductFields(fCount) = rst.Fields(ii).Name
+                fCount = fCount + 1
+            End If
+        Next ii
+
+        rst.Close
+        Set rst = Nothing
+    End If
+
+    Set rst = db.OpenRecordset("SELECT TOP 1 * FROM " & ProductDB & " WHERE [ProductName]='" & ProductName & "'")
+    For ii = 0 To UBound(ProductFields)
+        If (ProductFields(ii) = fieldName) Then
+            If (rst(fieldName) = True) Then
+                ProductFieldVisibility = True
+                Exit For
+            ElseIf (rst(fieldName) = False) Then
+                ProductFieldVisibility = False
+                Exit For
+            End If
+        End If
+    Next ii
+    rst.Close
+    Set rst = Nothing
+
+End Function
+
+
+'------------------------------------------------------------
 ' NewRecordID
 '
 '------------------------------------------------------------
@@ -442,8 +503,6 @@ Public Function NewRecordID(strRecordPrefix As String, lowBound As Long) As Stri
     Dim arrayDim As Boolean
     Dim ind As Integer
     Dim recordNumber As Long
-    Dim recordArray() As Long
-    Dim sortedArray() As Long
 
     strSql = "SELECT DISTINCT [RecordID]" & " FROM " & ItemDB & _
         " WHERE [RecordID]" & " LIKE '" & strRecordPrefix & "-*'" & _
@@ -663,11 +722,12 @@ Public Sub ReclaimRecordIDs()
 
     Dim rstCommit, rstInventory, rstItem As DAO.Recordset
     Dim invQuery, comQuery As String
-    Dim count As Long
+    Dim count, reclaim As Long
     Dim pregress_amount As Integer
 
     ' Open database
     open_db
+    reclaim = 0
 
     ' Open item recordset
     Set rstItem = db.OpenRecordset("SELECT * FROM " & ItemDB & " ORDER BY ID;")
@@ -683,31 +743,42 @@ Public Sub ReclaimRecordIDs()
         ' Update the progress meter
          SysCmd acSysCmdUpdateMeter, progress_amount
 
-        ' Check if Record ID has already been reclaimed
-        If Not (rstItem!RecordID = "---") Then
+        ' Check if Record ID has already been reclaimed or is reserved
+        If Not (rstItem!RecordID = "---") And Not (rstItem!Vendor = "RESERVED") Then
 
-            ' Get inventory/commit record
-            invQuery = "SELECT TOP 1 * FROM " & CommitQuery & " WHERE [ItemID] = " & rstItem!ID
+            ' Get commit record
+            comQuery = "SELECT TOP 1 * FROM " & CommitDB & " WHERE [ItemID] = " & rstItem!ID & ";"
+            Set rstCommit = db.OpenRecordset(comQuery)
+
+            ' Get inventory record
+            invQuery = "SELECT TOP 1 * FROM " & InventoryDB & " WHERE [ItemId] = " & rstItem!ID & ";"
             Set rstInventory = db.OpenRecordset(invQuery)
 
-            If (rstInventory.RecordCount = 0) Then
+            If (rstInventory.RecordCount = 0) And (rstCommit.RecordCount = 0) Then
                 ' Remove record if no inventory or commit entry exists
                 rstItem.Delete
+                reclaim = reclaim + 1
+            ElseIf (rstInventory.RecordCount = 0) Then
+                ' Set RecordID to "---" if no inventory record remains
+                rstItem.Edit
+                rstItem!RecordID = "---"
+                rstItem.Update
+                reclaim = reclaim + 1
             ElseIf (rstInventory!OnHand = 0) Then
                 ' Set RecordID to "---" if no quantity remains
                 rstItem.Edit
                 rstItem!RecordID = "---"
                 rstItem.Update
-            End If
+                reclaim = reclaim + 1
             End If
         End If
 
         ' Go to the next record
          rstItem.MoveNext
-   Next progress_amount
+    Next progress_amount
 
-   ' Remove the progress meter
-   SysCmd acSysCmdRemoveMeter
+    ' Remove the progress meter
+    SysCmd acSysCmdRemoveMeter
 
     ' Clean up
     rstItem.Close
@@ -716,6 +787,8 @@ Public Sub ReclaimRecordIDs()
     Set rstCommit = Nothing
     Set rstInventory = Nothing
     Set rstItem = Nothing
+
+    MsgBox reclaim & " Record IDs Reclaimed"
 End Sub
 
 
@@ -1089,6 +1162,31 @@ End Function
 
 
 '------------------------------------------------------------
+' RecordCheck
+' Returns true if given field condition matches all records
+' in field in Recordset
+'------------------------------------------------------------
+Public Function RecordCheck(ByRef rst As DAO.Recordset, Field As String, Condition As String) As Boolean
+    On Error Resume Next
+
+    rst.MoveFirst
+    Do While Not rst.EOF
+        If (rst.Fields(Field) = Condition) Then
+            rst.MoveNext
+        Else
+            RecordCheck = False
+            GoTo RecordCheck_Exit
+        End If
+    Loop
+    RecordCheck = True
+
+RecordCheck_Exit:
+    Exit Function
+
+End Function
+
+
+'------------------------------------------------------------
 ' OperationEntry
 '
 '------------------------------------------------------------
@@ -1266,4 +1364,42 @@ Function IsFileName(ByVal strFile As String) As Boolean
     'Arguments: strFile: File name to look at
 
     IsFileName = (Len(Right$(path, Len(path) - InStrRev(path, "."))) > 0)
+End Function
+
+
+'------------------------------------------------------------
+' IsVarArrayEmpty
+'
+'------------------------------------------------------------
+Function IsVarArrayEmpty(anArray As Variant)
+    Dim i As Integer
+
+    On Error Resume Next
+        i = UBound(anArray, 1)
+    If Err.Number = 0 Then
+        IsVarArrayEmpty = False
+    Else
+        IsVarArrayEmpty = True
+    End If
+
+End Function
+
+
+'------------------------------------------------------------
+' ProcedureExists
+' Check if procedure exists in form module
+'------------------------------------------------------------
+Function ProcedureExists(ProcedureForm As Access.Form, _
+    ProcedureName As String) As Boolean
+
+    Dim m As Module, p As Integer
+    ProcedureExists = True
+    On Error Resume Next
+
+    Set m = ProcedureForm.Module
+    p = m.ProcBodyLine(ProcedureName, vbext_pk_Proc)
+    If Err.Number <> 35 Then
+        Exit Function
+    End If
+    ProcedureExists = False
 End Function
