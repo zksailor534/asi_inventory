@@ -3,10 +3,11 @@ Option Compare Database
 '------------------------------------------------------------
 ' American Surplus Inventory Database
 ' Author: Nathanael Greene
-' Current Revision: 2.5.2
-' Revision Date: 05/09/2016
+' Current Revision: 2.5.3
+' Revision Date: 06/20/2016
 '
 ' Revision History:
+'   2.5.3:  New (ProductionInventory) Enabled Record ID search across categories
 '   2.5.2:  New (Utilities) Message to upgrade on login
 '           Bug fix: (Utilities) IsFileName wrong variable 'path' -> 'strFile'
 '   2.5.1:  Bug fix: (*) Set SetScreenSize subroutine to Public
@@ -94,7 +95,7 @@ Option Compare Database
 ' Global constants
 '
 '------------------------------------------------------------
-Public Const ReleaseVersion As String = "2.5.2"
+Public Const ReleaseVersion As String = "2.5.3"
 ''' User Roles
 Public Const DevelLevel As String = "Devel"
 Public Const AdminLevel As String = "Admin"
@@ -489,7 +490,6 @@ Public Function ProductFieldVisibility(ProductName As String, fieldName As Strin
     ProductFieldVisibility = True
     open_db
 
-    'Debug.Print IsVarArrayEmpty(ProductFields)
     If IsVarArrayEmpty(ProductFields) Then
         Set rst = db.OpenRecordset("SELECT TOP 1 * FROM " & ProductDB)
 
