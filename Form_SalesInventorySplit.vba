@@ -156,15 +156,6 @@ End Sub
 
 
 '------------------------------------------------------------
-' Form_Resize
-'
-'------------------------------------------------------------
-Private Sub Form_Resize()
-    SetScreenSize
-End Sub
-
-
-'------------------------------------------------------------
 ' SetScreenSize
 '
 '------------------------------------------------------------
@@ -173,12 +164,12 @@ Private Sub SetScreenSize()
     ' Top datasheet
     Me.sbfrmInvSearch.Left = 0
     Me.sbfrmInvSearch.Top = 0
-    Me.sbfrmInvSearch.Width = Round(Me.WindowWidth)
+    Me.sbfrmInvSearch.Width = ScreenWidth
     Me.sbfrmInvSearch.Height = Round(Me.WindowHeight * 0.95) / 2
     ' Bottom datasheet
     Me.sbfrmInvSearchBottom.Left = 0
     Me.sbfrmInvSearchBottom.Top = Round(Me.WindowHeight * 0.95) / 2 + 100
-    Me.sbfrmInvSearchBottom.Width = Round(Me.WindowWidth)
+    Me.sbfrmInvSearchBottom.Width = ScreenWidth
     Me.sbfrmInvSearchBottom.Height = Round(Me.WindowHeight * 0.95) / 2
     ' Divider line
     Me.lineDivider.Top = Round(Me.WindowHeight * 0.95) / 2 + 55

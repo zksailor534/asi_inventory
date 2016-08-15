@@ -17,6 +17,7 @@ Private Sub Form_Open(Cancel As Integer)
 
     ' Default is only active commits
     ActiveToggle.Value = True
+    ButtonStatus
     Me.sbfrmOrderSearch.Form.Controls("Status").ColumnHidden = True
 
     ' Engage filter from Committed status
@@ -88,8 +89,10 @@ Private Sub ActiveToggle_Click()
 
     If (ActiveToggle.Value = True) Then
         Me.sbfrmOrderSearch.Form.Controls("Status").ColumnHidden = True
+        ButtonStatus
     Else
         Me.sbfrmOrderSearch.Form.Controls("Status").ColumnHidden = False
+        ButtonStatus
     End If
 
     Me.sbfrmOrderSearch.Form.Filter = GetFilter(EmployeeRole, SalesOrderFiltered)
@@ -128,41 +131,42 @@ Private Sub CancelCommitButton_Click()
     Dim rstCommit As DAO.Recordset
     Dim decommitAll As Integer
 
-
     If (EmployeeRole = SalesLevel) And (EmployeeLogin <> SalesOrderUser(CurrentSalesOrder)) Then
-        MsgBox "Invalid User:" & vbCrLf & "Unable to edit Commit of other user", , "Invalid User"
+        MsgBox "Invalid User:" & vbCrLf & "Not authorized to Cancel Commitment", , "Invalid User"
         Exit Sub
     End If
 
-    If CurrentSalesOrder <> "" Then
-        decommitAll = MsgBox("Do you want to remove commitments for ALL items in Sales Order " & CurrentSalesOrder _
-            & "?", vbYesNo, "Decommit All Items")
+    open_db
+    Set rstCommit = db.OpenRecordset("SELECT * FROM " & CommitQuery & _
+        " WHERE " & sbfrmOrderSearch.Form.Filter)
+
+    If (Utilities.RecordCheck(rstCommit, "Reference", CurrentSalesOrder)) And _
+        (Utilities.RecordCheck(rstCommit, "Status", "A")) Then
+
+        decommitAll = MsgBox("Do you want to cancel ALL commitments in current view?", _
+            vbYesNo, "Cancel Items")
 
         If decommitAll = vbNo Then
-           Exit Sub
+           GoTo CancelCommitButton_Click_Exit
         ElseIf decommitAll = vbYes Then
-            open_db
-            Set rstCommit = db.OpenRecordset("SELECT * FROM " & CommitQuery & _
-                " WHERE [Reference] = '" & CurrentSalesOrder & "' AND [Status] = 'A'")
             Call Utilities.Commit_Cancel(rstCommit)
-            rstCommit.Close
-            Set rstCommit = Nothing
+
+            Utilities.OperationEntry rstCommit!ID, "Commit", _
+                "Cancelled Commitments from Sales Order " & CurrentSalesOrder
+
             Me.sbfrmOrderSearch.Form.Requery
         End If
     Else
-        MsgBox "No Sales Order Selected", , "Invalid Sales Order"
-        Exit Sub
+        MsgBox "Invalid Selection:" & vbCrLf & _
+            " - Select single sales order" & vbCrLf & _
+            " - Status must be Active", , "Invalid Sales Order"
+        GoTo CancelCommitButton_Click_Exit
     End If
-    Me.sbfrmOrderSearch.Form.Requery
-End Sub
 
+CancelCommitButton_Click_Exit:
+    rstCommit.Close
+    Set rstCommit = Nothing
 
-'------------------------------------------------------------
-' Form_Resize
-'
-'------------------------------------------------------------
-Private Sub Form_Resize()
-    SetScreenSize
 End Sub
 
 
@@ -174,7 +178,7 @@ Private Sub SetScreenSize()
     On Error Resume Next
     Me.sbfrmOrderSearch.Left = 0
     Me.sbfrmOrderSearch.Top = 0
-    Me.sbfrmOrderSearch.Width = Round(Me.WindowWidth)
+    Me.sbfrmOrderSearch.Width = ScreenWidth
     Me.sbfrmOrderSearch.Height = Round(Me.WindowHeight * 0.95)
 End Sub
 
@@ -242,3 +246,21 @@ Private Function GetFilter(Role As String, Order As String) As String
         GetFilter = "[Reference]= '" & Order & "'"
     End If
 End Function
+
+
+'------------------------------------------------------------
+' ButtonStatus
+'
+'------------------------------------------------------------
+Private Sub ButtonStatus()
+    On Error Resume Next
+
+    ' Active
+    If (ActiveToggle.Value = True) Then
+        CancelCommitButton.Enabled = True
+    ' Complete
+    Else
+        CancelCommitButton.Enabled = False
+    End If
+
+End Sub

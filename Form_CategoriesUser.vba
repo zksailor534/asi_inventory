@@ -289,9 +289,8 @@ End Sub
 '
 '------------------------------------------------------------
 Private Sub SetScreenSize()
-    On Error Resume Next
     Me.sbfrmDS.Left = 0
     Me.sbfrmDS.Top = 0
-    Me.sbfrmDS.Width = Round(Me.WindowWidth)
+    Me.sbfrmDS.Width = ScreenWidth
     Me.sbfrmDS.Height = Round(Me.WindowHeight) - 3400
 End Sub

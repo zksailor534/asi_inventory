@@ -9,7 +9,7 @@ Option Explicit
 Private Sub Form_Open(Cancel As Integer)
 
     open_db
-    screenSize
+    ScreenWidth = Round(Me.WindowWidth - 325)
     UserRoleSettings
 
 End Sub
@@ -25,7 +25,6 @@ On Error GoTo Form_Load_Err
     On Error GoTo 0
     Utilities.LoadSettings "American Surplus"
     Utilities.ConfirmLogin
-    screenSize
 
 Form_Load_Exit:
     Exit Sub
@@ -59,21 +58,14 @@ End Sub
 
 
 '------------------------------------------------------------
-' screenSize
-'
-'------------------------------------------------------------
-Private Sub screenSize()
-    On Error Resume Next
-    Me.Form.Width = Round(Me.WindowWidth * 0.9)
-End Sub
-
-
-'------------------------------------------------------------
 ' Form_Resize
 '
 '------------------------------------------------------------
 Private Sub Form_Resize()
-    screenSize
+    ScreenWidth = Round(Me.WindowWidth - 325)
+    If Utilities.ProcedureExists(Me!NavigationSubform.Form!NavigationSubform.Form, "SetScreenSize") Then
+        Me!NavigationSubform.Form!NavigationSubform.Form.SetScreenSize
+    End If
 End Sub
 
 
