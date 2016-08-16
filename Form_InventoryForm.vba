@@ -16,7 +16,7 @@ End Sub
 '------------------------------------------------------------
 Private Sub setUserPermissions()
     If (EmployeeRole = SalesLevel) Then
-        nvbManageInventory.Enabled = False
+        nvbManageInventory.Enabled = True
         nvbManageInventory.Visible = True
         nvbAddItem.Enabled = False
         nvbAddItem.Visible = True
