@@ -3,13 +3,14 @@ Option Compare Database
 '------------------------------------------------------------
 ' American Surplus Inventory Database
 ' Author: Nathanael Greene
-' Current Revision: 2.5.3
-' Revision Date: 06/20/2016
+' Current Revision: 2.6.0
+' Revision Date: 07/20/2016
 '
 ' Revision History:
+'   2.6.0:  New: Reorganized program, removed separation between Sales / Production
+'           New (ItemNew, ItemEdit): Added validation for Description length
 '   2.5.3:  New (ProductionInventory) Enabled Record ID search across categories
-'   2.5.2:  New (Utilities) Message to upgrade on login
-'           Bug fix: (Utilities) IsFileName wrong variable 'path' -> 'strFile'
+'   2.5.2:  Bug fix: (Utilities) IsFileName wrong variable 'path' -> 'strFile'
 '   2.5.1:  Bug fix: (*) Set SetScreenSize subroutine to Public
 '   2.5.0:  New (ItemNew, Utilities) Disable ItemNew fields based on product
 '           New (ProductionCommit, SalesCommit) '* All' based on filtered view
@@ -95,7 +96,7 @@ Option Compare Database
 ' Global constants
 '
 '------------------------------------------------------------
-Public Const ReleaseVersion As String = "2.5.3"
+Public Const ReleaseVersion As String = "2.6.0"
 ''' User Roles
 Public Const DevelLevel As String = "Devel"
 Public Const AdminLevel As String = "Admin"
@@ -118,10 +119,9 @@ Public Const ProductQuery As String = "qrySubProducts"
 ''' Form Names
 Public Const MainForm As String = "Main"
 Public Const LoginForm As String = "Login"
-Public Const SalesForm As String = "SalesForm"
-Public Const SalesSearch As String = "SalesInventory"
-Public Const SalesSearchSplit As String = "SalesInventorySplit"
+Public Const InventoryForm As String = "InventoryForm"
 Public Const InventoryManageForm As String = "InventoryManage"
+Public Const InventoryManageSplitForm As String = "InventoryManageSplit"
 Public Const InventoryOrderForm As String = "InventoryOrder"
 Public Const ItemDetailForm As String = "ItemDetail"
 Public Const ItemEditForm As String = "ItemEdit"

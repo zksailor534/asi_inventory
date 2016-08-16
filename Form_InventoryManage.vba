@@ -29,6 +29,9 @@ Private Sub Form_Open(Cancel As Integer)
     subForm.DatasheetFontHeight = 10
     SetScreenSize
 
+    ' User options
+    setUserPermissions
+
     ' Set visibility for the extra fields in warehouse portion of query
     subForm.Controls("CreateDate").ColumnHidden = True
     subForm.Controls("CreateOper").ColumnHidden = True
@@ -244,6 +247,25 @@ End Sub
 
 
 '------------------------------------------------------------
+' SplitScreenButton_Click
+'
+'------------------------------------------------------------
+Private Sub SplitScreenButton_Click()
+    If (Utilities.HasParent(Me)) Then
+        If (Me.Parent.Name = InventoryForm) Then
+            Me.Parent!nvbManageInventory.NavigationTargetName = InventoryManageSplitForm
+            Me.Parent!nvbManageInventory.SetFocus
+            SendKeys "{ENTER}", 0
+        Else
+            SplitScreenButton.Enabled = False
+        End If
+    Else
+        DoCmd.Close
+    End If
+End Sub
+
+
+'------------------------------------------------------------
 ' SetScreenSize
 '
 '------------------------------------------------------------
@@ -364,3 +386,40 @@ Private Function GetItemCategory(ItemID As Long) As String
         GetItemCategory = ""
     End If
 End Function
+
+
+'------------------------------------------------------------
+' setUserPermissions
+'
+'------------------------------------------------------------
+Private Sub setUserPermissions()
+    If (EmployeeRole = SalesLevel) Then
+        SplitScreenButton.Enabled = True
+        SplitScreenButton.Visible = True
+        EditItemButton.Enabled = False
+        EditItemButton.Visible = False
+        ManageInvButton.Visible = False
+        ManageInvButton.Enabled = False
+    ElseIf (EmployeeRole = ProdLevel) Then
+        SplitScreenButton.Enabled = False
+        SplitScreenButton.Visible = False
+        EditItemButton.Enabled = True
+        EditItemButton.Visible = True
+        ManageInvButton.Visible = True
+        ManageInvButton.Enabled = True
+    ElseIf (EmployeeRole = AdminLevel) Then
+        SplitScreenButton.Enabled = True
+        SplitScreenButton.Visible = True
+        EditItemButton.Enabled = True
+        EditItemButton.Visible = True
+        ManageInvButton.Visible = True
+        ManageInvButton.Enabled = True
+    ElseIf (EmployeeRole = DevelLevel) Then
+        SplitScreenButton.Enabled = True
+        SplitScreenButton.Visible = True
+        EditItemButton.Enabled = True
+        EditItemButton.Visible = True
+        ManageInvButton.Visible = True
+        ManageInvButton.Enabled = True
+    End If
+End Sub

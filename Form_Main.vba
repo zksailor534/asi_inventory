@@ -85,26 +85,12 @@ End Sub
 '
 '------------------------------------------------------------
 Private Sub UserRoleSettings()
-    If (EmployeeRole = SalesLevel) Then
-        nvbSales.Enabled = True
-        nvbProduction.Enabled = False
+    If (EmployeeRole = SalesLevel) Or (EmployeeRole = ProdLevel) Then
+        nvbInventory.Enabled = True
         nvbAdmin.Visible = False
         nvbAdmin.Enabled = False
-    ElseIf (EmployeeRole = ProdLevel) Then
-        Me.nvbProduction.SetFocus
-        SendKeys "{ENTER}", 0
-        nvbSales.Enabled = False
-        nvbProduction.Enabled = True
-        nvbAdmin.Visible = False
-        nvbAdmin.Enabled = False
-    ElseIf (EmployeeRole = AdminLevel) Then
-        nvbSales.Enabled = True
-        nvbProduction.Enabled = True
-        nvbAdmin.Visible = True
-        nvbAdmin.Enabled = True
-    ElseIf (EmployeeRole = DevelLevel) Then
-        nvbSales.Enabled = True
-        nvbProduction.Enabled = True
+    ElseIf (EmployeeRole = AdminLevel) Or (EmployeeRole = DevelLevel) Then
+        nvbInventory.Enabled = True
         nvbAdmin.Visible = True
         nvbAdmin.Enabled = True
     End If
