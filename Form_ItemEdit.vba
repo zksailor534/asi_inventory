@@ -385,6 +385,16 @@ Private Function ValidateFields() As Boolean
         End If
     End If
 
+    ' Check for valid description
+    If (Description <> "") Then
+        If (Len(Description) > 255) Then
+            Utilities.FieldErrorSet Me.Controls("Description")
+            ValidateFields = False
+        Else
+            Utilities.FieldErrorClear Me.Controls("Description")
+        End If
+    End If
+
 ExitNow:
     Exit Function
 
