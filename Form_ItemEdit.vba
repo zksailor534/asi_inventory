@@ -371,6 +371,9 @@ Private Function ValidateFields() As Boolean
     If (Len(Vendor) > 25) Then
         Utilities.FieldErrorSet Me.Controls("Vendor")
         ValidateFields = False
+    ElseIf (Vendor = "RESERVED") Then ' Cannot use RESERVED keyword
+        Utilities.FieldErrorSet Me.Controls("Vendor")
+        ValidateFields = False
     Else
         Utilities.FieldErrorClear Me.Controls("Vendor")
     End If
