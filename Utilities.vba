@@ -449,14 +449,14 @@ Public Function CategoryFieldOrder(CategoryName As String, fieldName As String) 
     CategoryFieldOrder = -1
     open_db
     Set rst = db.OpenRecordset("SELECT [Field1],[Field2],[Field3],[Field4],[Field5],[Field6]," & _
-        "[Field7],[Field8],[Field9],[Field10],[Field11],[Field12] FROM " & CategoryDB & " WHERE [CategoryName]='" & _
-        CategoryName & "' AND [User]=" & EmployeeID)
+        "[Field7],[Field8],[Field9],[Field10],[Field11],[Field12],[Field13],[Field14],[Field15]" & _
+        " FROM " & CategoryDB & " WHERE [CategoryName]='" & CategoryName & "' AND [User]=" & EmployeeID)
 
     If rst.RecordCount <> 1 Then
         ' Fall back to default
         Set rst = db.OpenRecordset("SELECT TOP 1 [Field1],[Field2],[Field3],[Field4],[Field5],[Field6],[Field7]," & _
-            "[Field8],[Field9],[Field10],[Field11],[Field12] FROM " & CategoryDB & " WHERE [CategoryName]='" & _
-            CategoryName & "' AND [User] IS NULL")
+            "[Field8],[Field9],[Field10],[Field11],[Field12],[Field13],[Field14],[Field15] FROM " & _
+            CategoryDB & " WHERE [CategoryName]='" & CategoryName & "' AND [User] IS NULL")
     End If
 
     If rst.RecordCount = 1 Then
