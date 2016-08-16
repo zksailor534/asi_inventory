@@ -61,18 +61,23 @@ End Sub
 Private Sub cmdSave_Click()
 On Error GoTo cmdSave_Click_Err
 
-    ' -------------------------------------------------------------------
-    ' Error Handling
-    ' -------------------------------------------------------------------
-    On Error GoTo 0
-
     ' Check for valid field entries
     If ValidateFields Then
-        SaveItem
+        If (Utilities.RecordIDCount(RecordID) = 1) Then
+            SaveItem
+        Else
+            MsgBox "Unable to save:" & vbCrLf & "Duplicate Record ID", "Save Failed"
+            GoTo cmdSave_Click_Exit
+        End If
+        If (Not (SaveInventory)) Then
+            MsgBox "Unable to save:" & vbCrLf & "Invalid location or quantity", "Save Failed"
+            GoTo cmdSave_Click_Exit
+        End If
         MsgBox "Item Successfully Saved!", , "Save Complete"
-        FillFields
+        ClearFields
     Else
-        MsgBox "Unable to save", , "Save Failed"
+        MsgBox "Unable to save:" & vbCrLf & "Invalid field", "Save Failed"
+        GoTo cmdSave_Click_Exit
     End If
 
 cmdSave_Click_Exit:
@@ -81,6 +86,7 @@ cmdSave_Click_Exit:
 cmdSave_Click_Err:
     MsgBox "Error: (" & Err.Number & ") " & Err.Description, vbCritical
     Resume cmdSave_Click_Exit
+
 End Sub
 
 

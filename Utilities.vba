@@ -1448,3 +1448,22 @@ Function ProcedureExists(ProcedureForm As Access.Form, _
     End If
     ProcedureExists = False
 End Function
+
+
+'------------------------------------------------------------
+' RecordIDCount
+' Returns the number of records matching given Record ID
+'------------------------------------------------------------
+Public Function RecordIDCount(RecordID As String) As Long
+    On Error Resume Next
+    Dim qry As String
+    Dim rst As DAO.Recordset
+
+    open_db
+    qry = "SELECT ID FROM " & ItemDB & " WHERE [RecordID]='" & RecordID & "';"
+    Set rst = db.OpenRecordset(qry)
+    rst.MoveLast
+
+    RecordIDCount = rst.RecordCount
+
+End Function

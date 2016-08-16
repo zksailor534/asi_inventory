@@ -63,25 +63,27 @@ End Sub
 Private Sub cmdSave_Click()
 On Error GoTo cmdSave_Click_Err
 
-    ' -------------------------------------------------------------------
-    ' Error Handling
-    ' -------------------------------------------------------------------
-    On Error GoTo 0
-
     ' Check for valid field entries
     If ValidateFields Then
-        If (RecordID.ListIndex = -1) Then
+        If (Utilities.RecordIDCount(RecordID) = 0) Then
             SaveNewItem
-        Else
+        ElseIf (Utilities.RecordIDCount(RecordID) = 1) Then
             Set rstItem = db.OpenRecordset("SELECT TOP 1 * FROM " & ItemDB & _
                 " WHERE [RecordID] = '" & RecordID & "'")
             SaveReservedItem
+        Else
+            MsgBox "Unable to save:" & vbCrLf & "Duplicate Record ID", "Save Failed"
+            GoTo cmdSave_Click_Exit
         End If
-        SaveInventory
+        If (Not (SaveInventory)) Then
+            MsgBox "Unable to save:" & vbCrLf & "Invalid location or quantity", "Save Failed"
+            GoTo cmdSave_Click_Exit
+        End If
         MsgBox "Item Successfully Saved!", , "Save Complete"
         ClearFields
     Else
-        MsgBox "Unable to save", , "Save Failed"
+        MsgBox "Unable to save:" & vbCrLf & "Invalid field", "Save Failed"
+        GoTo cmdSave_Click_Exit
     End If
 
 cmdSave_Click_Exit:
