@@ -3,10 +3,14 @@ Option Compare Database
 '------------------------------------------------------------
 ' American Surplus Inventory Database
 ' Author: Nathanael Greene
-' Current Revision: 2.6.1
-' Revision Date: 08/02/2016
+' Current Revision: 2.6.2
+' Revision Date: 08/16/2016
 '
 ' Revision History:
+'   2.6.2:  Bug fix: (Utilities) IsValidRecordID checks for duplicates
+'           Bug fix: (qryItemWarehouse) Remove duplicate OrigQty expression
+'           Bug fix: (Utilities) Added RecordIDCount to find duplicates
+'           Bug fix: (ItemEdit, ItemNew) Disallow "RESERVED" vendor
 '   2.6.1:  New (CategoriesDS, CategoriesEdit, CategoriesUser, Utilities)
 '               Expanded maximum fields from 12 to 15
 '           Bug fix (Products table): Changed L, W, D, H fields to Item... to
@@ -100,7 +104,7 @@ Option Compare Database
 ' Global constants
 '
 '------------------------------------------------------------
-Public Const ReleaseVersion As String = "2.6.1"
+Public Const ReleaseVersion As String = "2.6.2"
 ''' User Roles
 Public Const DevelLevel As String = "Devel"
 Public Const AdminLevel As String = "Admin"
