@@ -920,13 +920,29 @@ End Function
 '------------------------------------------------------------
 Public Function IsValidRecordID(RecordID As String) As Boolean
     On Error GoTo ErrHandler
+    Dim rst As DAO.Recordset
     Dim regEx As New RegExp
+    Dim strSql As String
+
+    open_db
 
     regEx.IgnoreCase = False
     regEx.Multiline = False
     regEx.Pattern = "^[A-Z]{1,4}-\d{4}$"
     If (regEx.Test(RecordID)) Then
-        IsValidRecordID = True
+        strSql = "SELECT [Vendor]" & " FROM " & ItemDB & _
+            " WHERE [RecordID]='" & RecordID & "';"
+        Set rst = db.OpenRecordset(strSql)
+        rst.MoveLast
+        If (rst.RecordCount >= 1) Then
+            If ((rst.RecordCount = 1) And (rst!Vendor = "RESERVED")) Then
+                IsValidRecordID = True
+            Else
+                IsValidRecordID = False
+            End If
+        Else
+            IsValidRecordID = True
+        End If
     Else
         IsValidRecordID = False
     End If
