@@ -3,10 +3,14 @@ Option Compare Database
 '------------------------------------------------------------
 ' American Surplus Inventory Database
 ' Author: Nathanael Greene
-' Current Revision: 2.6.1
-' Revision Date: 08/02/2016
+' Current Revision: 2.6.2
+' Revision Date: 08/16/2016
 '
 ' Revision History:
+'   2.6.2:  Bug fix: (Utilities) IsValidRecordID checks for duplicates
+'           Bug fix: (qryItemWarehouse) Remove duplicate OrigQty expression
+'           Bug fix: (Utilities) Added RecordIDCount to find duplicates
+'           Bug fix: (ItemEdit, ItemNew) Disallow "RESERVED" vendor
 '   2.6.1:  New (CategoriesDS, CategoriesEdit, CategoriesUser, Utilities)
 '               Expanded maximum fields from 12 to 15
 '           Bug fix (Products table): Changed L, W, D, H fields to Item... to
@@ -100,7 +104,7 @@ Option Compare Database
 ' Global constants
 '
 '------------------------------------------------------------
-Public Const ReleaseVersion As String = "2.6.1"
+Public Const ReleaseVersion As String = "2.6.2"
 ''' User Roles
 Public Const DevelLevel As String = "Devel"
 Public Const AdminLevel As String = "Admin"
@@ -920,13 +924,29 @@ End Function
 '------------------------------------------------------------
 Public Function IsValidRecordID(RecordID As String) As Boolean
     On Error GoTo ErrHandler
+    Dim rst As DAO.Recordset
     Dim regEx As New RegExp
+    Dim strSql As String
+
+    open_db
 
     regEx.IgnoreCase = False
     regEx.Multiline = False
     regEx.Pattern = "^[A-Z]{1,4}-\d{4}$"
     If (regEx.Test(RecordID)) Then
-        IsValidRecordID = True
+        strSql = "SELECT [Vendor]" & " FROM " & ItemDB & _
+            " WHERE [RecordID]='" & RecordID & "';"
+        Set rst = db.OpenRecordset(strSql)
+        rst.MoveLast
+        If (rst.RecordCount >= 1) Then
+            If ((rst.RecordCount = 1) And (rst!Vendor = "RESERVED")) Then
+                IsValidRecordID = True
+            Else
+                IsValidRecordID = False
+            End If
+        Else
+            IsValidRecordID = True
+        End If
     Else
         IsValidRecordID = False
     End If
@@ -1447,4 +1467,23 @@ Function ProcedureExists(ProcedureForm As Access.Form, _
         Exit Function
     End If
     ProcedureExists = False
+End Function
+
+
+'------------------------------------------------------------
+' RecordIDCount
+' Returns the number of records matching given Record ID
+'------------------------------------------------------------
+Public Function RecordIDCount(RecordID As String) As Long
+    On Error Resume Next
+    Dim qry As String
+    Dim rst As DAO.Recordset
+
+    open_db
+    qry = "SELECT ID FROM " & ItemDB & " WHERE [RecordID]='" & RecordID & "';"
+    Set rst = db.OpenRecordset(qry)
+    rst.MoveLast
+
+    RecordIDCount = rst.RecordCount
+
 End Function
