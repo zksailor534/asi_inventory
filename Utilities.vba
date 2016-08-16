@@ -3,10 +3,14 @@ Option Compare Database
 '------------------------------------------------------------
 ' American Surplus Inventory Database
 ' Author: Nathanael Greene
-' Current Revision: 2.6.0
-' Revision Date: 07/20/2016
+' Current Revision: 2.6.1
+' Revision Date: 08/02/2016
 '
 ' Revision History:
+'   2.6.1:  New (CategoriesDS, CategoriesEdit, CategoriesUser, Utilities)
+'               Expanded maximum fields from 12 to 15
+'           Bug fix (Products table): Changed L, W, D, H fields to Item... to
+'               fix field disabling in ItemNew and ItemEdit
 '   2.6.0:  New: Reorganized program, removed separation between Sales / Production
 '           New (ItemNew, ItemEdit): Added validation for Description length
 '   2.5.3:  New (ProductionInventory) Enabled Record ID search across categories
@@ -96,7 +100,7 @@ Option Compare Database
 ' Global constants
 '
 '------------------------------------------------------------
-Public Const ReleaseVersion As String = "2.6.0"
+Public Const ReleaseVersion As String = "2.6.1"
 ''' User Roles
 Public Const DevelLevel As String = "Devel"
 Public Const AdminLevel As String = "Admin"
@@ -449,14 +453,14 @@ Public Function CategoryFieldOrder(CategoryName As String, fieldName As String) 
     CategoryFieldOrder = -1
     open_db
     Set rst = db.OpenRecordset("SELECT [Field1],[Field2],[Field3],[Field4],[Field5],[Field6]," & _
-        "[Field7],[Field8],[Field9],[Field10],[Field11],[Field12] FROM " & CategoryDB & " WHERE [CategoryName]='" & _
-        CategoryName & "' AND [User]=" & EmployeeID)
+        "[Field7],[Field8],[Field9],[Field10],[Field11],[Field12],[Field13],[Field14],[Field15]" & _
+        " FROM " & CategoryDB & " WHERE [CategoryName]='" & CategoryName & "' AND [User]=" & EmployeeID)
 
     If rst.RecordCount <> 1 Then
         ' Fall back to default
         Set rst = db.OpenRecordset("SELECT TOP 1 [Field1],[Field2],[Field3],[Field4],[Field5],[Field6],[Field7]," & _
-            "[Field8],[Field9],[Field10],[Field11],[Field12] FROM " & CategoryDB & " WHERE [CategoryName]='" & _
-            CategoryName & "' AND [User] IS NULL")
+            "[Field8],[Field9],[Field10],[Field11],[Field12],[Field13],[Field14],[Field15] FROM " & _
+            CategoryDB & " WHERE [CategoryName]='" & CategoryName & "' AND [User] IS NULL")
     End If
 
     If rst.RecordCount = 1 Then
@@ -496,7 +500,7 @@ Public Function ProductFieldVisibility(ProductName As String, fieldName As Strin
         ' Define number of Product Fields
         fCount = 0
         For ii = 0 To rst.Fields.count - 1
-            If (rst.Fields(ii).Type = 1) Then
+            If (rst.Fields(ii).Type = 1) Then ' Boolean
                 fCount = fCount + 1
             End If
         Next ii
@@ -505,7 +509,7 @@ Public Function ProductFieldVisibility(ProductName As String, fieldName As Strin
         ' Fill array of Product Fields
         fCount = 0
         For ii = 0 To rst.Fields.count - 1
-            If (rst.Fields(ii).Type = 1) Then
+            If (rst.Fields(ii).Type = 1) Then ' Boolean
                 ProductFields(fCount) = rst.Fields(ii).Name
                 fCount = fCount + 1
             End If

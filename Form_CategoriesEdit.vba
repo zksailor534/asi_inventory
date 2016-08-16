@@ -121,6 +121,9 @@ Private Sub FillFields()
     Field10 = Nz(rstCategory!Field10, "")
     Field11 = Nz(rstCategory!Field11, "")
     Field12 = Nz(rstCategory!Field12, "")
+    Field13 = Nz(rstCategory!Field13, "")
+    Field14 = Nz(rstCategory!Field14, "")
+    Field15 = Nz(rstCategory!Field15, "")
 
 End Sub
 
@@ -158,6 +161,9 @@ Private Sub FieldSources()
     Field10.RowSource = ss
     Field11.RowSource = ss
     Field12.RowSource = ss
+    Field13.RowSource = ss
+    Field14.RowSource = ss
+    Field15.RowSource = ss
 End Sub
 
 
@@ -184,6 +190,9 @@ Private Sub NewItem()
             !Field10 = Field10
             !Field11 = Field11
             !Field12 = Field12
+            !Field13 = Field13
+            !Field14 = Field14
+            !Field15 = Field15
             !User = Null
             .Update
         End With
@@ -217,6 +226,9 @@ Private Sub SaveItem()
             !Field10 = Field10
             !Field11 = Field11
             !Field12 = Field12
+            !Field13 = Field13
+            !Field14 = Field14
+            !Field15 = Field15
             .Update
         End With
     Else
@@ -245,5 +257,5 @@ Public Sub SetScreenSize()
     Me.sbfrmDS.Left = 0
     Me.sbfrmDS.Top = 0
     Me.sbfrmDS.Width = ScreenWidth
-    Me.sbfrmDS.Height = Round(Me.WindowHeight) - 3400
+    Me.sbfrmDS.Height = Round(Me.WindowHeight) - 3800
 End Sub

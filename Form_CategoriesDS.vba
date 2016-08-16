@@ -17,6 +17,9 @@ Private Sub Form_Load()
         End If
     End If
 
+    ' Set font size
+    Me.DatasheetFontHeight = 10
+
     ' Set column widths
     SetColumnWidth
 End Sub
@@ -37,6 +40,9 @@ Private Sub ID_Click()
         Me.Parent!Field10 = Me.Field10
         Me.Parent!Field11 = Me.Field11
         Me.Parent!Field12 = Me.Field12
+        Me.Parent!Field13 = Me.Field13
+        Me.Parent!Field14 = Me.Field14
+        Me.Parent!Field15 = Me.Field15
     End If
 End Sub
 
@@ -56,6 +62,9 @@ Private Sub CategoryName_Click()
         Me.Parent!Field10 = Me.Field10
         Me.Parent!Field11 = Me.Field11
         Me.Parent!Field12 = Me.Field12
+        Me.Parent!Field13 = Me.Field13
+        Me.Parent!Field14 = Me.Field14
+        Me.Parent!Field15 = Me.Field15
     End If
 End Sub
 
@@ -75,6 +84,9 @@ Private Sub Prefix_Click()
         Me.Parent!Field10 = Me.Field10
         Me.Parent!Field11 = Me.Field11
         Me.Parent!Field12 = Me.Field12
+        Me.Parent!Field13 = Me.Field13
+        Me.Parent!Field14 = Me.Field14
+        Me.Parent!Field15 = Me.Field15
     End If
 End Sub
 
@@ -94,6 +106,9 @@ Private Sub Field1_Click()
         Me.Parent!Field10 = Me.Field10
         Me.Parent!Field11 = Me.Field11
         Me.Parent!Field12 = Me.Field12
+        Me.Parent!Field13 = Me.Field13
+        Me.Parent!Field14 = Me.Field14
+        Me.Parent!Field15 = Me.Field15
     End If
 End Sub
 
@@ -113,6 +128,9 @@ Private Sub Field2_Click()
         Me.Parent!Field10 = Me.Field10
         Me.Parent!Field11 = Me.Field11
         Me.Parent!Field12 = Me.Field12
+        Me.Parent!Field13 = Me.Field13
+        Me.Parent!Field14 = Me.Field14
+        Me.Parent!Field15 = Me.Field15
     End If
 End Sub
 
@@ -132,6 +150,9 @@ Private Sub Field3_Click()
         Me.Parent!Field10 = Me.Field10
         Me.Parent!Field11 = Me.Field11
         Me.Parent!Field12 = Me.Field12
+        Me.Parent!Field13 = Me.Field13
+        Me.Parent!Field14 = Me.Field14
+        Me.Parent!Field15 = Me.Field15
     End If
 End Sub
 
@@ -151,6 +172,9 @@ Private Sub Field4_Click()
         Me.Parent!Field10 = Me.Field10
         Me.Parent!Field11 = Me.Field11
         Me.Parent!Field12 = Me.Field12
+        Me.Parent!Field13 = Me.Field13
+        Me.Parent!Field14 = Me.Field14
+        Me.Parent!Field15 = Me.Field15
     End If
 End Sub
 
@@ -170,6 +194,9 @@ Private Sub Field5_Click()
         Me.Parent!Field10 = Me.Field10
         Me.Parent!Field11 = Me.Field11
         Me.Parent!Field12 = Me.Field12
+        Me.Parent!Field13 = Me.Field13
+        Me.Parent!Field14 = Me.Field14
+        Me.Parent!Field15 = Me.Field15
     End If
 End Sub
 
@@ -189,6 +216,9 @@ Private Sub Field6_Click()
         Me.Parent!Field10 = Me.Field10
         Me.Parent!Field11 = Me.Field11
         Me.Parent!Field12 = Me.Field12
+        Me.Parent!Field13 = Me.Field13
+        Me.Parent!Field14 = Me.Field14
+        Me.Parent!Field15 = Me.Field15
     End If
 End Sub
 
@@ -208,6 +238,9 @@ Private Sub Field7_Click()
         Me.Parent!Field10 = Me.Field10
         Me.Parent!Field11 = Me.Field11
         Me.Parent!Field12 = Me.Field12
+        Me.Parent!Field13 = Me.Field13
+        Me.Parent!Field14 = Me.Field14
+        Me.Parent!Field15 = Me.Field15
     End If
 End Sub
 
@@ -227,6 +260,9 @@ Private Sub Field8_Click()
         Me.Parent!Field10 = Me.Field10
         Me.Parent!Field11 = Me.Field11
         Me.Parent!Field12 = Me.Field12
+        Me.Parent!Field13 = Me.Field13
+        Me.Parent!Field14 = Me.Field14
+        Me.Parent!Field15 = Me.Field15
     End If
 End Sub
 
@@ -246,6 +282,9 @@ Private Sub Field9_Click()
         Me.Parent!Field10 = Me.Field10
         Me.Parent!Field11 = Me.Field11
         Me.Parent!Field12 = Me.Field12
+        Me.Parent!Field13 = Me.Field13
+        Me.Parent!Field14 = Me.Field14
+        Me.Parent!Field15 = Me.Field15
     End If
 End Sub
 
@@ -265,6 +304,9 @@ Private Sub Field10_Click()
         Me.Parent!Field10 = Me.Field10
         Me.Parent!Field11 = Me.Field11
         Me.Parent!Field12 = Me.Field12
+        Me.Parent!Field13 = Me.Field13
+        Me.Parent!Field14 = Me.Field14
+        Me.Parent!Field15 = Me.Field15
     End If
 End Sub
 
@@ -284,6 +326,9 @@ Private Sub Field11_Click()
         Me.Parent!Field10 = Me.Field10
         Me.Parent!Field11 = Me.Field11
         Me.Parent!Field12 = Me.Field12
+        Me.Parent!Field13 = Me.Field13
+        Me.Parent!Field14 = Me.Field14
+        Me.Parent!Field15 = Me.Field15
     End If
 End Sub
 
