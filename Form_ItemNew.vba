@@ -148,7 +148,7 @@ Private Sub updateProductList()
 
     CategoryID = Utilities.GetCategoryID(Category)
     If (CategoryID <> 0) Then
-        sqlQuery = "SELECT ProductName FROM " & ProductQuery & " WHERE Products.Category.Value = " & CategoryID & _
+        sqlQuery = "SELECT ProductName FROM " & ProductQuery & " WHERE Category.Value = " & CategoryID & _
             " ORDER BY ProductName;"
         Product.RowSource = sqlQuery
     End If
@@ -567,7 +567,8 @@ End Sub
 ' SaveInventory
 '
 '------------------------------------------------------------
-Private Sub SaveInventory()
+Private Function SaveInventory() As Boolean
+On Error GoTo SaveInventory_Err
     ' Save Inventory Record
     With rstNewInventory
         .AddNew
@@ -585,8 +586,17 @@ Private Sub SaveInventory()
         !LastDate = Now()
         .Update
     End With
+    SaveInventory = True
 
-End Sub
+SaveInventory_Exit:
+    Exit Function
+
+SaveInventory_Err:
+    MsgBox "Error: (" & Err.Number & ") " & Err.Description, vbCritical
+    SaveInventory = False
+    Resume SaveInventory_Exit
+
+End Function
 
 
 '------------------------------------------------------------
