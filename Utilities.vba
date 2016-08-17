@@ -3,10 +3,13 @@ Option Compare Database
 '------------------------------------------------------------
 ' American Surplus Inventory Database
 ' Author: Nathanael Greene
-' Current Revision: 2.6.2
-' Revision Date: 08/16/2016
+' Current Revision: 2.6.3
+' Revision Date: 08/17/2016
 '
 ' Revision History:
+'   2.6.3:  Bug fix: (Utilities) IsValidRecordID mishandles empty records
+'           Bug fix: (ItemNew, ItemEdit) MsgBox type error (missing argument)
+'           Bug fix: (ItemEdit) Extraneous logic for SaveInventory (copy/paste error)
 '   2.6.2:  Bug fix: (Utilities) IsValidRecordID checks for duplicates
 '           Bug fix: (qryItemWarehouse) Remove duplicate OrigQty expression
 '           Bug fix: (Utilities) Added RecordIDCount to find duplicates
@@ -104,7 +107,7 @@ Option Compare Database
 ' Global constants
 '
 '------------------------------------------------------------
-Public Const ReleaseVersion As String = "2.6.2"
+Public Const ReleaseVersion As String = "2.6.3"
 ''' User Roles
 Public Const DevelLevel As String = "Devel"
 Public Const AdminLevel As String = "Admin"
