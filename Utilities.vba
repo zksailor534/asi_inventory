@@ -923,7 +923,7 @@ End Function
 ' Check if given string is valid Record ID
 '------------------------------------------------------------
 Public Function IsValidRecordID(RecordID As String) As Boolean
-    On Error GoTo ErrHandler
+    On Error Resume Next
     Dim rst As DAO.Recordset
     Dim regEx As New RegExp
     Dim strSql As String
@@ -950,10 +950,7 @@ Public Function IsValidRecordID(RecordID As String) As Boolean
     Else
         IsValidRecordID = False
     End If
-    Exit Function
-ErrHandler:
-    IsValidRecordID = False
-    Exit Function
+
 End Function
 
 
