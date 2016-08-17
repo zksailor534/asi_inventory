@@ -66,17 +66,17 @@ On Error GoTo cmdSave_Click_Err
         If (Utilities.RecordIDCount(RecordID) = 1) Then
             SaveItem
         Else
-            MsgBox "Unable to save:" & vbCrLf & "Duplicate Record ID", "Save Failed"
             GoTo cmdSave_Click_Exit
         End If
         If (Not (SaveInventory)) Then
             MsgBox "Unable to save:" & vbCrLf & "Invalid location or quantity", "Save Failed"
+            MsgBox "Unable to save:" & vbCrLf & "Duplicate Record ID", , "Save Failed"
             GoTo cmdSave_Click_Exit
         End If
         MsgBox "Item Successfully Saved!", , "Save Complete"
         ClearFields
     Else
-        MsgBox "Unable to save:" & vbCrLf & "Invalid field", "Save Failed"
+        MsgBox "Unable to save:" & vbCrLf & "Field invalid", , "Save Failed"
         GoTo cmdSave_Click_Exit
     End If
 
