@@ -3,10 +3,14 @@ Option Compare Database
 '------------------------------------------------------------
 ' American Surplus Inventory Database
 ' Author: Nathanael Greene
-' Current Revision: 2.6.3
-' Revision Date: 08/17/2016
+' Current Revision: 2.6.4
+' Revision Date: 08/22/2016
 '
 ' Revision History:
+'   2.6.4:  New (ItemNew, ItemEdit): Prompt to use reserved record IDs
+'           Bug fix (ItemNew, ItemEdit): Sort product names in dropdown
+'           Bug fix (ItemNew, ItemInventoryManage, OrderCommitManage):
+'               Check for null location and improve inventory validation
 '   2.6.3:  Bug fix: (Utilities) IsValidRecordID mishandles empty records
 '           Bug fix: (ItemNew, ItemEdit) MsgBox type error (missing argument)
 '           Bug fix: (ItemEdit) Extraneous logic for SaveInventory (copy/paste error)
@@ -107,7 +111,7 @@ Option Compare Database
 ' Global constants
 '
 '------------------------------------------------------------
-Public Const ReleaseVersion As String = "2.6.3"
+Public Const ReleaseVersion As String = "2.6.4"
 ''' User Roles
 Public Const DevelLevel As String = "Devel"
 Public Const AdminLevel As String = "Admin"

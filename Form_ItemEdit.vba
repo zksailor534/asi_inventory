@@ -31,6 +31,9 @@ On Error GoTo Form_Load_Err
 
     FillFields
 
+    ' Populate Record IDs dropdown
+    updateReservedRecordIDs
+
 Form_Load_Exit:
     Exit Sub
 
@@ -106,9 +109,22 @@ End Sub
 '
 '------------------------------------------------------------
 Private Sub cmdNewRecordID_Click()
+    Dim reservedPrompt As Integer
+
     If (Prefix <> "") Then
         Prefix = UCase(Prefix)
-        RecordID = Utilities.NewRecordID(Prefix, 1)
+        If (RecordID.ListCount > 0) Then ' No RecordID list, need to find from DB
+            reservedPrompt = MsgBox("Would you like to use a reserved Record ID?", vbYesNoCancel, "Reserved ID")
+            If (reservedPrompt = vbNo) Then
+                RecordID = Utilities.NewRecordID(Prefix, 1)
+            ElseIf (reservedPrompt = vbYes) Then
+                RecordID = RecordID.ItemData(0)
+            Else
+                Exit Sub
+            End If
+        Else
+            RecordID = Utilities.NewRecordID(Prefix, 1)
+        End If
     Else
         MsgBox "No Record ID Prefix Provided.", vbOKOnly
     End If
@@ -134,6 +150,7 @@ End Sub
 '------------------------------------------------------------
 Private Sub Category_AfterUpdate()
     If (Category <> "") Then
+        updateReservedRecordIDs
         updateProductList
         updateManufacturerList
     End If
@@ -164,10 +181,30 @@ Private Sub updateProductList()
 
     CategoryID = Utilities.GetCategoryID(Category)
     If (CategoryID <> 0) Then
-        sqlQuery = "SELECT ProductName FROM " & ProductQuery & " WHERE Category.Value = " & CategoryID
+        sqlQuery = "SELECT Products.ProductName" & _
+            " FROM " & ProductDB & _
+            " WHERE (((Products.Category.Value) = " & CategoryID & "))" & _
+            " ORDER BY Products.ProductName;"
         Product.RowSource = sqlQuery
     Else
         Product.RowSource = ""
+    End If
+End Sub
+
+
+'------------------------------------------------------------
+' updateReservedRecordIDs
+' Update Record ID Combo box with any reserved Record IDs
+'------------------------------------------------------------
+Private Sub updateReservedRecordIDs()
+    Dim CategoryID As Long
+    Dim sqlQuery As String
+
+    CategoryID = Utilities.GetCategoryID(Category)
+    If (CategoryID <> 0) Then
+        sqlQuery = "SELECT [RecordID],[VENDOR],[CreateOper] FROM " & ItemDB & _
+            " WHERE Category = '" & Category & "' AND [Vendor] = 'RESERVED'"
+        RecordID.RowSource = sqlQuery
     End If
 End Sub
 
@@ -243,12 +280,14 @@ Private Sub FillFields()
 
     Category = Nz(rstItem!Category, "")
     If (Category <> "") Then
+        updateReservedRecordIDs
         updateProductList
         updateManufacturerList
     End If
 
     Prefix = Nz(Utilities.GetRecordPrefix(rstItem!RecordID), "")
     RecordID = Nz(rstItem!RecordID, "")
+
     Style = Nz(rstItem!Style, "")
     Manufacturer = Nz(rstItem!Manufacturer, "")
     SuggSellingPrice = Nz(rstItem!SuggSellingPrice, "")

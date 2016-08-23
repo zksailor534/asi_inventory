@@ -148,8 +148,10 @@ Private Sub updateProductList()
 
     CategoryID = Utilities.GetCategoryID(Category)
     If (CategoryID <> 0) Then
-        sqlQuery = "SELECT ProductName FROM " & ProductQuery & " WHERE Category.Value = " & CategoryID & _
-            " ORDER BY ProductName;"
+        sqlQuery = "SELECT Products.ProductName" & _
+            " FROM " & ProductDB & _
+            " WHERE (((Products.Category.Value) = " & CategoryID & "))" & _
+            " ORDER BY Products.ProductName;"
         Product.RowSource = sqlQuery
     End If
 End Sub
@@ -258,9 +260,20 @@ End Sub
 '
 '------------------------------------------------------------
 Private Sub cmdNewRecordID_Click()
+    Dim reservedPrompt As Integer
+
     If (Prefix <> "") Then
         Prefix = UCase(Prefix)
-        RecordID = Utilities.NewRecordID(Prefix, 1)
+        If (RecordID.ListCount > 0) Then
+            reservedPrompt = MsgBox("Would you like to use a reserved Record ID?", vbYesNo, "Reserved ID")
+            If (reservedPrompt = vbNo) Then
+                RecordID = Utilities.NewRecordID(Prefix, 1)
+            Else
+                RecordID = RecordID.ItemData(0)
+            End If
+        Else
+            RecordID = Utilities.NewRecordID(Prefix, 1)
+        End If
     Else
         MsgBox "No Record ID Prefix Provided.", vbOKOnly
     End If
@@ -283,7 +296,7 @@ Private Function ValidateFields() As Boolean
     End If
 
     ' Check for valid Location
-    If (Location = "") Then
+    If ((Trim(Location) = "") Or IsNull(Location)) Then
         Utilities.FieldErrorSet Me.Controls("Location")
         ValidateFields = False
     Else
