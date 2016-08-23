@@ -394,22 +394,30 @@ On Error GoTo cmdComplete_Click_Err
 
             ' Adjust Location if different
             If (Location <> !Location) Then
-                Utilities.OperationEntry rstCommit!ID, "Inventory", _
-                    "Changed Location from " & rstCommit!Location & " to " & Location & _
-                    " after Commit " & CurrentCommitID & " Completion", "Move"
-                !Location = Location
-                !LastOper = EmployeeLogin
-                !LastDate = Now()
+                If ((Trim(Location) = "") Or IsNull(Location)) Then
+                    Utilities.OperationEntry rstCommit!ID, "Inventory", _
+                        "Changed Location from " & rstCommit!Location & " to " & Location & _
+                        " after Commit " & CurrentCommitID & " Completion", "Move"
+                    !Location = Location
+                    !LastOper = EmployeeLogin
+                    !LastDate = Now()
+                Else
+                    MsgBox "Unable to change location", , "Invalid Location"
+                End If
             End If
 
             ' Adjust Quantity if different
             If (OnHand <> !OnHand) Then
-                Utilities.OperationEntry rstCommit!ID, "Inventory", _
-                    "Changed OnHand from " & rstCommit!OnHand & " to " & OnHand & _
-                    " after Commit " & CurrentCommitID & " Completion", "Count"
-                !OnHand = OnHand
-                !LastOper = EmployeeLogin
-                !LastDate = Now()
+                If (Quantity = "") Or IsNull(Quantity) Then
+                    Utilities.OperationEntry rstCommit!ID, "Inventory", _
+                        "Changed OnHand from " & rstCommit!OnHand & " to " & OnHand & _
+                        " after Commit " & CurrentCommitID & " Completion", "Count"
+                    !OnHand = OnHand
+                    !LastOper = EmployeeLogin
+                    !LastDate = Now()
+                Else
+                    MsgBox "Unable to change OnHand quantity", , "Invalid Quantity"
+                End If
             End If
 
             .Update

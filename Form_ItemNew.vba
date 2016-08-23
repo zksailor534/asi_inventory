@@ -296,7 +296,7 @@ Private Function ValidateFields() As Boolean
     End If
 
     ' Check for valid Location
-    If (Location = "") Then
+    If ((Trim(Location) = "") Or IsNull(Location)) Then
         Utilities.FieldErrorSet Me.Controls("Location")
         ValidateFields = False
     Else
