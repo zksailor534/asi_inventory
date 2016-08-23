@@ -148,8 +148,10 @@ Private Sub updateProductList()
 
     CategoryID = Utilities.GetCategoryID(Category)
     If (CategoryID <> 0) Then
-        sqlQuery = "SELECT ProductName FROM " & ProductQuery & " WHERE Category.Value = " & CategoryID & _
-            " ORDER BY ProductName;"
+        sqlQuery = "SELECT Products.ProductName" & _
+            " FROM " & ProductDB & _
+            " WHERE (((Products.Category.Value) = " & CategoryID & "))" & _
+            " ORDER BY Products.ProductName;"
         Product.RowSource = sqlQuery
     End If
 End Sub
