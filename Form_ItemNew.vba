@@ -258,9 +258,20 @@ End Sub
 '
 '------------------------------------------------------------
 Private Sub cmdNewRecordID_Click()
+    Dim reservedPrompt As Integer
+
     If (Prefix <> "") Then
         Prefix = UCase(Prefix)
-        RecordID = Utilities.NewRecordID(Prefix, 1)
+        If (RecordID.ListCount > 0) Then
+            reservedPrompt = MsgBox("Would you like to use a reserved Record ID?", vbYesNo, "Reserved ID")
+            If (reservedPrompt = vbNo) Then
+                RecordID = Utilities.NewRecordID(Prefix, 1)
+            Else
+                RecordID = RecordID.ItemData(0)
+            End If
+        Else
+            RecordID = Utilities.NewRecordID(Prefix, 1)
+        End If
     Else
         MsgBox "No Record ID Prefix Provided.", vbOKOnly
     End If
