@@ -3,10 +3,11 @@ Option Compare Database
 '------------------------------------------------------------
 ' American Surplus Inventory Database
 ' Author: Nathanael Greene
-' Current Revision: 2.6.4
-' Revision Date: 08/22/2016
+' Current Revision: 2.6.5
+' Revision Date: 08/24/2016
 '
 ' Revision History:
+'   2.6.5:  Bug fix (OrderCommitManage): Copy/paste error with Quantity
 '   2.6.4:  New (ItemNew, ItemEdit): Prompt to use reserved record IDs
 '           Bug fix (ItemNew, ItemEdit): Sort product names in dropdown
 '           Bug fix (ItemNew, ItemInventoryManage, OrderCommitManage):
@@ -111,7 +112,7 @@ Option Compare Database
 ' Global constants
 '
 '------------------------------------------------------------
-Public Const ReleaseVersion As String = "2.6.4"
+Public Const ReleaseVersion As String = "2.6.5"
 ''' User Roles
 Public Const DevelLevel As String = "Devel"
 Public Const AdminLevel As String = "Admin"

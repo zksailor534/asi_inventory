@@ -408,7 +408,7 @@ On Error GoTo cmdComplete_Click_Err
 
             ' Adjust Quantity if different
             If (OnHand <> !OnHand) Then
-                If (Quantity = "") Or IsNull(Quantity) Then
+                If (OnHand = "") Or IsNull(OnHand) Then
                     Utilities.OperationEntry rstCommit!ID, "Inventory", _
                         "Changed OnHand from " & rstCommit!OnHand & " to " & OnHand & _
                         " after Commit " & CurrentCommitID & " Completion", "Count"
